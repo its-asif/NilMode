@@ -1,0 +1,36 @@
+body {
+  font-family: Arial, sans-serif;
+  min-width: 250px;
+  padding: 10px;
+}
+
+.tabs {
+  display: flex;
+  margin-bottom: 10px;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 5px;
+  cursor: pointer;
+  border: none;
+  background: #eee;
+}
+
+.tab-btn.active {
+  background: #007bff;
+  color: #fff;
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+label {
+  display: block;
+  margin: 6px 0;
+}

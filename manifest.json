@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "NilMode",
+  "version": "1.0",
+  "description": "Block Facebook, YouTube and stay focused 🚀",
+  "permissions": [
+    "storage",
+    "tabs",
+    "webNavigation"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*.facebook.com/*", "*://*.youtube.com/*"],
+      "js": ["content.js"]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["blocked.html"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}
