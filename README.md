@@ -4,12 +4,12 @@ Minimal browser helper that blocks Facebook or YouTube entirely or hides the mos
 
 ---
 
-## Privacy (Plain English)
+## Privacy
 We do not send anything anywhere. The extension only remembers the switches you turn on or off. You can remove it at any time.
 
 ---
 
-## Install (One Time)
+## Install
 1. Download this folder to your computer (keep it somewhere you won’t delete accidentally).
 2. Open Chrome and go to: chrome://extensions
 3. Turn on “Developer mode” (top right).
