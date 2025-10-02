@@ -179,17 +179,44 @@ function insertProductiveFacebookButtons() {
         if (groupSpan && groupSpan.textContent.trim()) {
           title = groupSpan.textContent.trim();
           type = 'group';
+        } else if (anchor.textContent.trim()) {
+          // For pages, title is directly in the anchor tag
+          title = anchor.textContent.trim();
+          type = 'page';
         }
       }
       if (!title) return; // nothing meaningful
 
       chrome.storage.sync.get(['fbBlacklist'], data => {
         const list = Array.isArray(data.fbBlacklist) ? data.fbBlacklist : [];
-        // Deduplicate by href
-        if (!list.some(entry => entry.href === href)) {
-          list.push({ href, title, type, addedAt: Date.now() });
+        
+        // Clean href by keeping only the part before the first question mark
+        const cleanHref = (() => {
+          try {
+            const questionMarkIndex = href.indexOf('?');
+            if (questionMarkIndex !== -1) {
+              return href.substring(0, questionMarkIndex);
+            }
+            return href;
+          } catch { return href; }
+        })();
+        
+        // Deduplicate by cleaned href
+        if (!list.some(entry => entry.href === cleanHref)) {
+          // Limit title length to prevent quota issues
+          const cleanTitle = title.length > 100 ? title.substring(0, 97) + '...' : title;
+          const newEntry = { href: cleanHref, title: cleanTitle, type, addedAt: Date.now() };
+          
+          // Check if adding this entry would exceed storage limits
+          const estimatedSize = JSON.stringify([...list, newEntry]).length;
+          if (estimatedSize > 7000) { // Conservative limit (sync storage is ~8KB)
+            alert('Blacklist storage full. Please clear some entries.');
+            return;
+          }
+          
+          list.push(newEntry);
           chrome.storage.sync.set({ fbBlacklist: list });
-          try { console.log('[NilMode][FB Blacklist] Added:', { href, title, type }); } catch(_){}
+          try { console.log('[NilMode][FB Blacklist] Added:', { href: cleanHref, title: cleanTitle, type }); } catch(_){}
         }
       });
     });
@@ -205,12 +232,11 @@ function insertProductiveFacebookButtons() {
 function hideBlacklistedPosts(blacklist) {
   const normalize = href => {
     try {
-      const u = new URL(href);
-      u.hash = '';
-      u.search = '';
-      let path = u.pathname.replace(/\/+/g,'/');
-      if (path !== '/' && path.endsWith('/')) path = path.slice(0,-1);
-      return u.origin + path;
+      const questionMarkIndex = href.indexOf('?');
+      if (questionMarkIndex !== -1) {
+        return href.substring(0, questionMarkIndex);
+      }
+      return href;
     } catch { return href; }
   };
   const set = new Set(blacklist.map(e => normalize(e.href)));
