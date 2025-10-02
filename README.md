@@ -2,6 +2,8 @@
 
 Minimal browser helper that blocks Facebook or YouTube entirely or hides the most distracting parts (feed, stories, recommendations, shorts, comments, next videos). Turn things off when you want to watch or read something intentional, turn them back on when you're done.
 
+Now also includes an early experimental toggle: "Productive Facebook" which injects a small ❌ button beside each post author's name (no action yet—visual cue / hook for future post-level controls).
+
 ---
 
 ## Privacy (Plain English)
@@ -27,6 +29,7 @@ To update (if you change files): on the same page press the Reload button on the
 2. For each platform, choose what to block or hide:
 	- Block Facebook / Block YouTube: sends you to a simple motivational page instead of opening the site.
 	- Hide Feed / Hide Stories (Facebook): removes the infinite scroll areas.
+	- Productive Facebook (experimental): adds a ❌ button next to each post author (future: quick dismiss or focus tools).
 	- Hide Recommendations / Shorts / Comments / Next Suggestions (YouTube): strips away the usual rabbit holes.
 3. Open or refresh the site—changes apply immediately.
 4. Want a temporary break from all blocking? Open the Settings tab and toggle “Pause”.

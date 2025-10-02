@@ -30,7 +30,13 @@ function runContentFilters() {
   chrome.storage.sync.get([
     "hideFacebookFeed", "hideFacebookStories", "hideRightSidebar",
     "hideYTRecs", "hideYTShorts", "hideYTComments", "hideYTNext",
-    "pauseToggle", "pauseUntil"
+    "pauseToggle", "pauseUntil",
+    // Productive Facebook feature
+    "productiveFacebook",
+    // Facebook blacklist
+    "fbBlacklist",
+    // Hide sponsored posts
+    "hideSponsoredPosts"
   ], data => {
     // Handle pause with timestamp persistence
     if (data.pauseToggle) {
@@ -62,6 +68,37 @@ function runContentFilters() {
 
       // Right Sidebar
       applyVisibility(".xwib8y2.x1y1aw1k", !!data.hideRightSidebar);
+
+      // Productive Facebook buttons injection
+      if (data.productiveFacebook) {
+        insertProductiveFacebookButtons();
+        // Hide blacklisted posts ONLY when productive mode is active
+        if (Array.isArray(data.fbBlacklist) && data.fbBlacklist.length) {
+          hideBlacklistedPosts(data.fbBlacklist);
+        } else {
+          // If list empty, restore any previously hidden posts
+          document.querySelectorAll('.x1lliihq[data-ndx-bl-hidden="1"]').forEach(post => {
+            post.style.display = '';
+            delete post.dataset.ndxBlHidden;
+          });
+        }
+        // Hide sponsored posts if toggle on
+        if (data.hideSponsoredPosts) {
+          hideSponsoredPosts();
+        } else {
+          restoreSponsoredPosts();
+        }
+      } else {
+        // Clean up if toggled off
+        document.querySelectorAll('.ndx-pf-btn').forEach(btn => btn.remove());
+        // Also restore any blacklist-hidden posts since feature inactive
+        document.querySelectorAll('.x1lliihq[data-ndx-bl-hidden="1"]').forEach(post => {
+          post.style.display = '';
+          delete post.dataset.ndxBlHidden;
+        });
+        // Restore sponsored if productive mode off
+        restoreSponsoredPosts();
+      }
     }
 
     // ===== YOUTUBE =====
@@ -88,9 +125,135 @@ observer.observe(document.body, { childList: true, subtree: true });
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area !== 'sync') return;
   const relevantKeys = [
-    'hideFacebookFeed','hideFacebookStories','hideRightSidebar','hideYTRecs','hideYTShorts','hideYTComments','hideYTNext','pauseToggle','pauseUntil'
+    'hideFacebookFeed','hideFacebookStories','hideRightSidebar','hideYTRecs','hideYTShorts','hideYTComments','hideYTNext','pauseToggle','pauseUntil','productiveFacebook','fbBlacklist','hideSponsoredPosts'
   ];
   if (Object.keys(changes).some(k => relevantKeys.includes(k))) {
     runContentFilters();
   }
 });
+
+// === Productive Facebook Feature ===
+// Adds a small ❌ button after the username span.xjp7ctv inside the FIRST span.xt0psk2
+// that is found within the FIRST .xu06os2.x1ok221b inside each post (.x1lliihq).
+// We only insert once per post (by checking for existing button in that wrapper).
+function insertProductiveFacebookButtons() {
+  const posts = document.querySelectorAll('.x1lliihq');
+  posts.forEach(post => {
+    // First container within this post
+    const container = post.querySelector('.xu06os2.x1ok221b');
+    if (!container) return;
+    // First name wrapper inside that container
+    const nameWrapper = container.querySelector('span.xt0psk2');
+    if (!nameWrapper) return;
+    // Skip if button already present
+    if (nameWrapper.querySelector('.ndx-pf-btn')) return;
+    const userSpan = nameWrapper.querySelector('span.xjp7ctv');
+    if (!userSpan) return;
+
+    const btn = document.createElement('button');
+    btn.textContent = '❌';
+    btn.className = 'ndx-pf-btn';
+    btn.title = 'Productive: remove / dismiss (no action wired yet)';
+    Object.assign(btn.style, {
+      marginLeft: '4px',
+      cursor: 'pointer',
+      border: 'none',
+      background: 'transparent',
+      padding: '0 4px',
+      fontSize: '14px'
+    });
+    // Click: extract person/group link + name, store in blacklist
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const anchor = userSpan.querySelector('a');
+      if (!anchor || !anchor.href) return;
+      const href = anchor.href;
+      let title = '';
+      let type = 'unknown';
+      const personSpan = anchor.querySelector('b > span');
+      if (personSpan && personSpan.textContent.trim()) {
+        title = personSpan.textContent.trim();
+        type = 'person';
+      } else {
+        const groupSpan = anchor.querySelector(':scope > span');
+        if (groupSpan && groupSpan.textContent.trim()) {
+          title = groupSpan.textContent.trim();
+          type = 'group';
+        }
+      }
+      if (!title) return; // nothing meaningful
+
+      chrome.storage.sync.get(['fbBlacklist'], data => {
+        const list = Array.isArray(data.fbBlacklist) ? data.fbBlacklist : [];
+        // Deduplicate by href
+        if (!list.some(entry => entry.href === href)) {
+          list.push({ href, title, type, addedAt: Date.now() });
+          chrome.storage.sync.set({ fbBlacklist: list });
+          try { console.log('[NilMode][FB Blacklist] Added:', { href, title, type }); } catch(_){}
+        }
+      });
+    });
+    userSpan.insertAdjacentElement('afterend', btn);
+  });
+}
+
+// TODO (settings UI): Expose facebook blacklist (fbBlacklist) for viewing/removing entries.
+// Structure: [{ href, title, type<'person'|'group'|'unknown'>, addedAt }]
+// Planned actions: remove single, clear all, maybe auto-hide matching posts.
+
+// === Blacklist Hiding Logic ===
+function hideBlacklistedPosts(blacklist) {
+  const normalize = href => {
+    try {
+      const u = new URL(href);
+      u.hash = '';
+      u.search = '';
+      let path = u.pathname.replace(/\/+/g,'/');
+      if (path !== '/' && path.endsWith('/')) path = path.slice(0,-1);
+      return u.origin + path;
+    } catch { return href; }
+  };
+  const set = new Set(blacklist.map(e => normalize(e.href)));
+
+  const posts = document.querySelectorAll('.x1lliihq');
+  posts.forEach(post => {
+    const container = post.querySelector('.xu06os2.x1ok221b');
+    if(!container) return;
+    const nameWrapper = container.querySelector('span.xt0psk2');
+    if(!nameWrapper) return;
+    const anchor = nameWrapper.querySelector('span.xjp7ctv a');
+    if(!anchor || !anchor.href) return;
+    const norm = normalize(anchor.href);
+    if (set.has(norm)) {
+      if (!post.dataset.ndxBlHidden) {
+        post.style.display = 'none';
+        post.dataset.ndxBlHidden = '1';
+      }
+    } else if (post.dataset.ndxBlHidden) {
+      post.style.display = '';
+      delete post.dataset.ndxBlHidden;
+    }
+  });
+}
+
+// === Sponsored Posts Hiding ===
+// A sponsored marker inside a post contains all these classes together:
+// .xmper1u.x1qlqyl8.x1r8a4m5.x1n2onr6.x17ihmo5.x1ihsnu5
+// If found within a .x1lliihq post and productive mode + hideSponsoredPosts are on, hide it.
+const SPONSORED_SELECTOR = '.xt0psk2.x1qlqyl8.x1n2onr6.x17ihmo5.x1o7lsid';
+function hideSponsoredPosts(){
+  const posts = document.querySelectorAll('.x1lliihq');
+  posts.forEach(post => {
+    if (post.dataset.ndxSponsoredHidden) return; // already hidden
+    if (post.querySelector(SPONSORED_SELECTOR)) {
+      post.style.display = 'none';
+      post.dataset.ndxSponsoredHidden = '1';
+    }
+  });
+}
+function restoreSponsoredPosts(){
+  document.querySelectorAll('.x1lliihq[data-ndx-sponsored-hidden="1"]').forEach(post => {
+    post.style.display = '';
+    delete post.dataset.ndxSponsoredHidden;
+  });
+}

@@ -13,7 +13,11 @@ document.querySelectorAll(".tab-btn").forEach(btn => {
 const toggles = [
   "blockFacebook", "hideFacebookFeed", "hideFacebookStories", "hideRightSidebar",
   "blockYouTube", "hideYTRecs", "hideYTShorts", "hideYTComments", "hideYTNext",
-  "pauseToggle"
+  "pauseToggle",
+  // New feature toggle
+  "productiveFacebook",
+  // Hide sponsored posts
+  "hideSponsoredPosts"
 ];
 
 toggles.forEach(id => {
@@ -38,4 +42,70 @@ chrome.storage.sync.get(["pauseMinutes"], data => {
 });
 pauseInput.addEventListener("change", () => {
   chrome.storage.sync.set({ pauseMinutes: parseInt(pauseInput.value) });
+});
+
+// === Facebook Blacklist UI ===
+const fbListEl = document.getElementById('fbBlacklistList');
+const fbEmptyEl = document.getElementById('fbBlacklistEmpty');
+const fbClearBtn = document.getElementById('fbBlacklistClear');
+
+function renderFbBlacklist(list){
+  fbListEl.innerHTML = '';
+  if(!list || list.length === 0){
+    fbEmptyEl.style.display = 'block';
+    fbClearBtn.style.display = 'none';
+    return;
+  }
+  fbEmptyEl.style.display = 'none';
+  fbClearBtn.style.display = 'inline-block';
+
+  list.sort((a,b)=> b.addedAt - a.addedAt); // newest first
+  list.forEach(entry => {
+    const li = document.createElement('li');
+    li.style.margin = '2px 0';
+    li.style.display = 'flex';
+    li.style.alignItems = 'center';
+    li.style.gap = '4px';
+    const link = document.createElement('a');
+    link.href = entry.href;
+    link.textContent = entry.title + (entry.type && entry.type !== 'unknown' ? ` (${entry.type[0]})` : '');
+    link.target = '_blank';
+    link.style.flex = '1';
+    link.style.textDecoration = 'none';
+    link.style.color = '#1877f2';
+    const removeBtn = document.createElement('button');
+    removeBtn.textContent = '✕';
+    removeBtn.title = 'Remove from blacklist';
+    removeBtn.style.border = 'none';
+    removeBtn.style.background = '#eee';
+    removeBtn.style.cursor = 'pointer';
+    removeBtn.style.padding = '0 6px';
+    removeBtn.style.borderRadius = '3px';
+    removeBtn.addEventListener('click', () => {
+      chrome.storage.sync.get(['fbBlacklist'], data => {
+        const newList = (data.fbBlacklist || []).filter(e => e.href !== entry.href);
+        chrome.storage.sync.set({ fbBlacklist: newList });
+      });
+    });
+    li.appendChild(link);
+    li.appendChild(removeBtn);
+    fbListEl.appendChild(li);
+  });
+}
+
+chrome.storage.sync.get(['fbBlacklist'], data => {
+  renderFbBlacklist(data.fbBlacklist || []);
+});
+
+fbClearBtn.addEventListener('click', () => {
+  if(confirm('Clear entire Facebook blacklist?')){
+    chrome.storage.sync.set({ fbBlacklist: [] });
+  }
+});
+
+chrome.storage.onChanged.addListener((changes, area) => {
+  if(area !== 'sync') return;
+  if(changes.fbBlacklist){
+    renderFbBlacklist(changes.fbBlacklist.newValue || []);
+  }
 });
