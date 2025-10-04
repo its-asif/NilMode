@@ -66,8 +66,11 @@ function runContentFilters() {
         applyVisibility(".x193iq5w.xgmub6v.x1ceravr", true);
       }
 
-      // Right Sidebar
-      applyVisibility(".xwib8y2.x1y1aw1k", !!data.hideRightSidebar);
+      // Right Sidebar (new primary selector + legacy fallback)
+      const rightSidebarSelectors = [
+        '.x78zum5.xdt5ytf.x1iyjqo2.x1n2onr6>.x1y1aw1k',
+      ];
+      rightSidebarSelectors.forEach(sel => applyVisibility(sel, !!data.hideRightSidebar));
 
       // Hide Reels posts when Hide Stories is enabled
       if (hideStories) {
@@ -110,7 +113,14 @@ function runContentFilters() {
 
     // ===== YOUTUBE =====
     if (url.includes("youtube.com")) {
-      applyVisibility("ytd-browse.style-scope.ytd-page-manager", !!data.hideYTRecs);
+      // Only hide recommendations on the pure homepage (no path or path is '/'), not on search, subscriptions, library, etc.
+      const isHome = (/^https?:\/\/(www\.)?youtube\.com\/?(\?|$)/).test(url);
+      if (isHome) {
+        applyVisibility("ytd-browse.style-scope.ytd-page-manager", !!data.hideYTRecs);
+      } else if (!isHome) {
+        // Ensure restored off home if previously hidden
+        applyVisibility("ytd-browse.style-scope.ytd-page-manager", false);
+      }
       applyVisibility("ytd-rich-section-renderer.style-scope.ytd-rich-grid-renderer", !!data.hideYTShorts);
       if (url.includes("watch")) {
         // Per user provided mapping
@@ -196,34 +206,41 @@ function insertProductiveFacebookButtons() {
 
       chrome.storage.sync.get(['fbBlacklist'], data => {
         const list = Array.isArray(data.fbBlacklist) ? data.fbBlacklist : [];
-        
-        // Clean href by keeping only the part before the first question mark
-        const cleanHref = (() => {
+        // Derive path-only key (no protocol/domain, truncated before '?')
+        const pathKey = (() => {
           try {
-            const questionMarkIndex = href.indexOf('?');
-            if (questionMarkIndex !== -1) {
-              return href.substring(0, questionMarkIndex);
+            const u = new URL(href);
+            let p = u.pathname; // keeps leading '/'
+            // Truncate group path to /groups/<id>/ pattern if applicable
+            if (p.startsWith('/groups/')) {
+              const segs = p.split('/').filter(Boolean); // ['groups','184379328369061', ...]
+              if (segs.length >= 2) {
+                p = `/groups/${segs[1]}/`; // ensure trailing slash
+              }
+            } else {
+              // Remove trailing slash except root
+              if (p.length > 1 && p.endsWith('/')) p = p.slice(0, -1);
             }
-            return href;
+            // Remove query portion by ignoring search entirely
+            // Already have path only; drop leading '/'
+            return p.startsWith('/') ? p.slice(1) : p;
           } catch { return href; }
         })();
-        
-        // Deduplicate by cleaned href
-        if (!list.some(entry => entry.href === cleanHref)) {
-          // Limit title length to prevent quota issues
+
+        if (!pathKey) return;
+
+        // Deduplicate by pathKey (entries now store path only in href field)
+        if (!list.some(entry => entry.href === pathKey)) {
           const cleanTitle = title.length > 100 ? title.substring(0, 97) + '...' : title;
-          const newEntry = { href: cleanHref, title: cleanTitle, type, addedAt: Date.now() };
-          
-          // Check if adding this entry would exceed storage limits
+          const newEntry = { href: pathKey, title: cleanTitle, type, addedAt: Date.now() };
           const estimatedSize = JSON.stringify([...list, newEntry]).length;
-          if (estimatedSize > 7000) { // Conservative limit (sync storage is ~8KB)
+          if (estimatedSize > 7000) {
             alert('Blacklist storage full. Please clear some entries.');
             return;
           }
-          
           list.push(newEntry);
           chrome.storage.sync.set({ fbBlacklist: list });
-          try { console.log('[NilMode][FB Blacklist] Added:', { href: cleanHref, title: cleanTitle, type }); } catch(_){}
+          try { console.log('[NilMode][FB Blacklist] Added:', { path: pathKey, title: cleanTitle, type }); } catch(_){ }
         }
       });
     });
@@ -237,16 +254,21 @@ function insertProductiveFacebookButtons() {
 
 // === Blacklist Hiding Logic ===
 function hideBlacklistedPosts(blacklist) {
-  const normalize = href => {
+  const normalize = raw => {
     try {
-      const questionMarkIndex = href.indexOf('?');
-      if (questionMarkIndex !== -1) {
-        return href.substring(0, questionMarkIndex);
+      const u = new URL(raw);
+      let p = u.pathname;
+      if (p.startsWith('/groups/')) {
+        const segs = p.split('/').filter(Boolean);
+        if (segs.length >= 2) p = `/groups/${segs[1]}/`;
+      } else {
+        if (p.length > 1 && p.endsWith('/')) p = p.slice(0,-1);
       }
-      return href;
-    } catch { return href; }
+      return p.startsWith('/') ? p.slice(1) : p;
+    } catch { return raw; }
   };
-  const set = new Set(blacklist.map(e => normalize(e.href)));
+  // Stored href now is already path-only; but normalize anyway for safety
+  const set = new Set(blacklist.map(e => e.href));
 
   const posts = document.querySelectorAll('.x1lliihq');
   posts.forEach(post => {
@@ -297,7 +319,7 @@ function hideReelsPosts(){
   posts.forEach(post => {
     if (post.dataset.ndxReelsHidden) return; // already hidden
     const reelsIndicator = post.querySelector('span.x1lliihq.x6ikm8r.x10wlt62.x1n2onr6.xlyipyv.xuxw1ft.x1j85h84 span');
-    if (reelsIndicator && reelsIndicator.textContent && reelsIndicator.textContent.includes('Reels')) {
+    if (reelsIndicator && reelsIndicator.textContent && (reelsIndicator.textContent.includes('Reels') || reelsIndicator.textContent.includes('Short Video'))) {
       post.style.display = 'none';
       post.dataset.ndxReelsHidden = '1';
     }

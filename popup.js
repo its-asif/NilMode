@@ -9,6 +9,27 @@ document.querySelectorAll(".tab-btn").forEach(btn => {
   });
 });
 
+// Dynamic default tab based on current active tab URL
+function activateTab(name){
+  const targetBtn = document.querySelector(`.tab-btn[data-tab="${name}"]`);
+  if(!targetBtn) return;
+  targetBtn.click();
+}
+
+try {
+  chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
+    if (!tabs || !tabs.length) return;
+    const url = tabs[0].url || '';
+    if (url.includes('youtube.com')) {
+      activateTab('youtube');
+    } else if (url.includes('facebook.com')) {
+      activateTab('facebook');
+    } else {
+      // leave default (facebook) or could activate settings if preferred
+    }
+  });
+} catch(_) {}
+
 // === SAVE STATE TO STORAGE ===
 const toggles = [
   "blockFacebook", "hideFacebookFeed", "hideFacebookStories", "hideRightSidebar",
@@ -67,7 +88,8 @@ function renderFbBlacklist(list){
     li.style.alignItems = 'center';
     li.style.gap = '4px';
     const link = document.createElement('a');
-    link.href = entry.href;
+  const fullHref = entry.href.startsWith('http') ? entry.href : ('https://www.facebook.com/' + entry.href);
+  link.href = fullHref;
     link.textContent = entry.title + (entry.type && entry.type !== 'unknown' ? ` (${entry.type[0]})` : '');
     link.target = '_blank';
     link.style.flex = '1';
