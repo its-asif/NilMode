@@ -33,7 +33,7 @@ try {
 // === SAVE STATE TO STORAGE ===
 const toggles = [
   "blockFacebook", "hideFacebookFeed", "hideFacebookStories", "hideRightSidebar",
-  "blockYouTube", "hideYTRecs", "hideYTShorts", "hideYTComments", "hideYTNext",
+  "blockYouTube", "hideYTRecs", "hideYTShorts", "hideYTComments", "hideYTNext", "ytCourseMode",
   "pauseToggle",
   // New feature toggle
   "productiveFacebook",
@@ -45,7 +45,11 @@ toggles.forEach(id => {
   const el = document.getElementById(id);
   if(!el) return;
   chrome.storage.sync.get([id], data => {
-    el.checked = data[id] || false;
+    if(id === 'ytCourseMode'){
+      el.checked = (typeof data[id] === 'boolean') ? data[id] : true; // default ON
+    } else {
+      el.checked = data[id] || false;
+    }
   });
   el.addEventListener("change", () => {
     const update = { [id]: el.checked };
@@ -139,32 +143,71 @@ chrome.storage.onChanged.addListener((changes, area) => {
 const ytListEl = document.getElementById('ytPlaylistsList');
 const ytEmptyEl = document.getElementById('ytPlaylistsEmpty');
 const ytClearBtn = document.getElementById('ytPlaylistsClear');
+const ytCompletedWrap = document.getElementById('ytCompletedWrap');
+const ytCompletedList = document.getElementById('ytCompletedList');
+const ytCompletedToggle = document.getElementById('ytCompletedToggle');
+const ytCompletedChevron = document.getElementById('ytCompletedChevron');
+
+if(ytCompletedToggle){
+  ytCompletedToggle.addEventListener('click', () => {
+    if(!ytCompletedList) return;
+    const open = ytCompletedList.style.display !== 'none';
+    ytCompletedList.style.display = open ? 'none' : 'block';
+    if(ytCompletedChevron) ytCompletedChevron.textContent = open ? '▲' : '▼';
+  });
+}
+
+function formatPct(pl){
+  if(!pl || typeof pl.progressPct !== 'number') return '';
+  return ` (${pl.progressPct}%)`;
+}
 
 function renderYtPlaylists(list){
   if(!ytListEl) return;
   ytListEl.innerHTML = '';
+  if(ytCompletedList) ytCompletedList.innerHTML='';
   const arr = Array.isArray(list) ? list.slice() : [];
   arr.sort((a,b)=> (b.addedAt||0) - (a.addedAt||0));
   if(arr.length === 0){
     if(ytEmptyEl) ytEmptyEl.style.display = 'block';
     if(ytClearBtn) ytClearBtn.style.display = 'none';
+    if(ytCompletedWrap) ytCompletedWrap.style.display = 'none';
     return;
   }
   if(ytEmptyEl) ytEmptyEl.style.display = 'none';
   if(ytClearBtn) ytClearBtn.style.display = 'inline-block';
+  const active = [];
+  const completed = [];
   arr.forEach(pl => {
+    if (typeof pl.progressPct === 'number' && pl.progressPct >= 100) completed.push(pl); else active.push(pl);
+  });
+
+  const buildItem = (pl, listEl) => {
     const li = document.createElement('li');
     li.style.margin = '2px 0';
     li.style.display = 'flex';
     li.style.alignItems = 'center';
     li.style.gap = '4px';
     const link = document.createElement('a');
-    link.textContent = pl.title || pl.id || 'Untitled playlist';
+    const baseTitle = pl.title || pl.id || 'Untitled playlist';
+    link.textContent = baseTitle + formatPct(pl);
     link.href = pl.url || ('https://www.youtube.com/playlist?list=' + encodeURIComponent(pl.id));
     link.target = '_blank';
     link.style.flex = '1';
     link.style.textDecoration = 'none';
     link.style.color = '#065fd4';
+    if(pl.progressPct >= 100){
+      link.style.textDecoration = 'line-through';
+      link.style.opacity = '.75';
+    }
+    const meta = document.createElement('span');
+    meta.style.fontSize = '11px';
+    meta.style.opacity = '.7';
+    const done = (pl.completedIds||[]).length;
+    const total = pl.videoCount || 0;
+    if(total){
+      meta.textContent = `${done}/${total}`;
+    }
     const removeBtn = document.createElement('button');
     removeBtn.textContent = '✕';
     removeBtn.title = 'Remove playlist';
@@ -181,9 +224,17 @@ function renderYtPlaylists(list){
       });
     });
     li.appendChild(link);
+    if(total) li.appendChild(meta);
     li.appendChild(removeBtn);
-    ytListEl.appendChild(li);
-  });
+    listEl.appendChild(li);
+  };
+
+  active.forEach(pl => buildItem(pl, ytListEl));
+  completed.forEach(pl => buildItem(pl, ytCompletedList));
+
+  if(ytCompletedWrap){
+    ytCompletedWrap.style.display = completed.length ? 'block' : 'none';
+  }
 }
 
 if(ytClearBtn){

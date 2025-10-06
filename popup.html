@@ -32,12 +32,20 @@
     <label><input type="checkbox" id="hideYTRecs"> Hide Recommendations</label><br>
     <label><input type="checkbox" id="hideYTShorts"> Hide Shorts</label><br>
     <label><input type="checkbox" id="hideYTComments"> Hide Comments</label><br>
-    <label><input type="checkbox" id="hideYTNext"> Hide Next Suggestions</label>
+    <label><input type="checkbox" id="hideYTNext"> Hide Next Suggestions</label><br>
+    <label><input type="checkbox" id="ytCourseMode"> Enable Course Playlists</label>
     <hr>
     <h4 style="margin:6px 0 4px;">Saved Playlists</h4>
     <div id="ytPlaylistsEmpty" style="font-size:12px;color:#666;display:none;">(None yet) Use "Start Course" on a playlist.</div>
-    <ul id="ytPlaylistsList" style="list-style:none;padding-left:0;margin:4px 0;max-height:150px;overflow:auto;"></ul>
+    <ul id="ytPlaylistsList" style="list-style:none;padding-left:0;margin:4px 0;max-height:120px;overflow:auto;"></ul>
     <button id="ytPlaylistsClear" style="display:none;margin-top:4px;">Clear All</button>
+    <div id="ytCompletedWrap" style="margin-top:10px;display:none;">
+      <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;" id="ytCompletedToggle">
+        <h4 style="margin:6px 0 4px;">Completed Playlists</h4>
+        <span id="ytCompletedChevron" style="font-size:12px;opacity:.7;">▼</span>
+      </div>
+      <ul id="ytCompletedList" style="list-style:none;padding-left:0;margin:4px 0;max-height:100px;overflow:auto;display:block;"></ul>
+    </div>
   </div>
 
   <div id="settings" class="tab-content">

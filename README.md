@@ -4,6 +4,30 @@ Minimal browser helper that blocks Facebook or YouTube entirely or hides the mos
 
 Now also includes an early experimental toggle: "Productive Facebook" which injects a small ❌ button beside each post author's name (no action yet—visual cue / hook for future post-level controls).
 
+### Developer Note (Structure)
+The monolithic `content.js` was first split, and is now further decomposed:
+
+`content/`
+	- `utils.js` – shared helpers (visibility, etc.)
+	- `init.js` – orchestration (reads storage, applies features, observers)
+
+`content/facebook/`
+	- `productive.js` – inject Productive Facebook buttons
+	- `blacklist.js` – blacklist hide logic
+	- `sponsored.js` – sponsored post detection & hide/restore
+	- `reels.js` – reels hide/restore
+
+`content/youtube/`
+	- `style.js` – stylesheet injection for playlist UI
+	- `time.js` – time parsing/formatting utilities
+	- `extract.js` – DOM extraction of stats (pure vs watch playlist)
+	- `statsPopulate.js` – populate boxes from stored/extracted stats
+	- `handlers.js` – update/delete button handlers (stats box)
+	- `save.js` – save playlist + create stats box
+	- `inject.js` – decide whether to show button or stats box and insert it
+
+Manifest lists these in dependency-safe order; all functions remain global so existing calls continue working.
+
 ---
 
 ## Privacy
