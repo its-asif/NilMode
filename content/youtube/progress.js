@@ -77,8 +77,21 @@ function ndxRefreshProgressBars(entry){
 function ndxInjectCompletionCheckboxes(existingList){
   const playlistId = ndxGetPlaylistIdFromUrl();
   if(!playlistId) return;
+  // Only inject if this playlist is actually saved in ytPlaylists.
   const entry = Array.isArray(existingList)? existingList.find(p=>p.id===playlistId): null;
-  const completed = entry && Array.isArray(entry.completedIds) ? new Set(entry.completedIds) : new Set();
+  if(!entry){
+    // If previously injected (user deleted playlist), remove checkboxes & styling.
+    document.querySelectorAll('.ndx-course-check-host').forEach(h=>h.remove());
+    document.querySelectorAll('.ndx-course-menu-aug').forEach(m=>{
+      m.classList.remove('ndx-course-menu-aug');
+      m.style.removeProperty('display');
+      m.style.removeProperty('justify-content');
+      m.style.removeProperty('align-items');
+      m.style.removeProperty('flex-direction');
+    });
+    return; // Do not show checkboxes for unsaved playlist
+  }
+  const completed = Array.isArray(entry.completedIds) ? new Set(entry.completedIds) : new Set();
 
   // Apply flex reversal & center styling to menu containers then insert checkbox
   // Support both pure playlist (ytd-playlist-video-renderer) and watch panel (ytd-playlist-panel-video-renderer)

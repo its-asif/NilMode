@@ -164,6 +164,33 @@ function formatPct(pl){
 
 function renderYtPlaylists(list){
   if(!ytListEl) return;
+  // If course mode disabled, hide entire saved playlists UI (list, empty text, clear, completed section)
+  try {
+    chrome.storage.sync.get(['ytCourseMode'], data => {
+      const enabled = data.ytCourseMode !== false; // default true
+      const sectionHeader = document.querySelector('#youtube h4');
+      const savedHeader = Array.from(document.querySelectorAll('#youtube h4')).find(h=>/Saved Playlists/i.test(h.textContent||''));
+      if(!enabled){
+        if(savedHeader) savedHeader.style.display = 'none';
+        if(ytEmptyEl) ytEmptyEl.style.display = 'none';
+        if(ytClearBtn) ytClearBtn.style.display = 'none';
+        if(ytListEl) ytListEl.style.display = 'none';
+        if(ytCompletedWrap) ytCompletedWrap.style.display = 'none';
+        return; // do not render
+      } else {
+        if(savedHeader) savedHeader.style.display = '';
+        if(ytListEl) ytListEl.style.display = '';
+      }
+      // proceed with normal rendering when enabled
+      internalRender(list);
+    });
+  } catch(_){
+    internalRender(list);
+  }
+}
+
+function internalRender(list){
+  // original body of renderYtPlaylists moved here
   ytListEl.innerHTML = '';
   if(ytCompletedList) ytCompletedList.innerHTML='';
   const arr = Array.isArray(list) ? list.slice() : [];
@@ -247,4 +274,22 @@ if(ytClearBtn){
 
 chrome.storage.sync.get(['ytPlaylists'], data => {
   renderYtPlaylists(data.ytPlaylists || []);
+});
+
+// React to ytCourseMode changes to hide/show without needing playlists change
+chrome.storage.sync.get(['ytCourseMode'], data => {
+  const enabled = data.ytCourseMode !== false; // default true
+  if(!enabled){
+    // Force a re-render pass which will early hide
+    renderYtPlaylists([]);
+  } else {
+    chrome.storage.sync.get(['ytPlaylists'], d2 => renderYtPlaylists(d2.ytPlaylists || []));
+  }
+});
+
+chrome.storage.onChanged.addListener((changes, area) => {
+  if(area !== 'sync') return;
+  if(changes.ytCourseMode){
+    chrome.storage.sync.get(['ytPlaylists'], data => renderYtPlaylists(data.ytPlaylists || []));
+  }
 });

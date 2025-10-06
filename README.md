@@ -1,102 +1,62 @@
-# NilMode
+## NilMode
+Stay focused. Hide the noisy parts of Facebook and YouTube. Only see what you came for.
 
-Minimal browser helper that blocks Facebook or YouTube entirely or hides the most distracting parts (feed, stories, recommendations, shorts, comments, next videos). Turn things off when you want to watch or read something intentional, turn them back on when you're done.
-
-Now also includes an early experimental toggle: "Productive Facebook" which injects a small ❌ button beside each post author's name (no action yet—visual cue / hook for future post-level controls).
-
-### Developer Note (Structure)
-The monolithic `content.js` was first split, and is now further decomposed:
-
-`content/`
-	- `utils.js` – shared helpers (visibility, etc.)
-	- `init.js` – orchestration (reads storage, applies features, observers)
-
-`content/facebook/`
-	- `productive.js` – inject Productive Facebook buttons
-	- `blacklist.js` – blacklist hide logic
-	- `sponsored.js` – sponsored post detection & hide/restore
-	- `reels.js` – reels hide/restore
-
-`content/youtube/`
-	- `style.js` – stylesheet injection for playlist UI
-	- `time.js` – time parsing/formatting utilities
-	- `extract.js` – DOM extraction of stats (pure vs watch playlist)
-	- `statsPopulate.js` – populate boxes from stored/extracted stats
-	- `handlers.js` – update/delete button handlers (stats box)
-	- `save.js` – save playlist + create stats box
-	- `inject.js` – decide whether to show button or stats box and insert it
-
-Manifest lists these in dependency-safe order; all functions remain global so existing calls continue working.
+Simple switches. No accounts. No clutter.
 
 ---
 
-## Privacy
-We do not send anything anywhere. The extension only remembers the switches you turn on or off. You can remove it at any time.
+## Privacy (Plain & Simple)
+- Nothing is sent anywhere.
+- The extension only remembers which toggles you turn on.
+- Your saved playlists and progress stay inside your browser.
+- Remove the extension any time to forget everything.
 
 ---
 
-## Install
-1. Download this folder to your computer (keep it somewhere you won’t delete accidentally).
+## Features
+Facebook:
+- Block the whole site OR selectively hide: Feed, Stories (also hides Reels), Right Sidebar, Sponsored Posts.
+- Productive Mode: adds a ❌ button + personal blacklist (hide posts from chosen people, pages, or groups).
+
+YouTube (Viewing):
+- Block the whole site OR hide distractions: Home Recommendations, Shorts, Comments, “Up Next” sidebar.
+
+YouTube (Course Playlists) – optional:
+- Save a playlist as a “course” (one click) and get: total videos & time, per‑video check marks, live progress bar & percent, time left, collapsible Completed section, quick Update/Delete, and a master toggle to hide it all.
+
+General:
+- Pause all blocking (auto-resume after chosen minutes) • No account • Light & fast.
+
+---
+
+## How to Add (Install)
+1. Download the folder to your computer (keep it somewhere safe; don’t delete it later).
 2. Open Chrome and go to: chrome://extensions
-3. Turn on “Developer mode” (top right).
-4. Click “Load unpacked” and select the folder.
-5. (Optional) Pin the extension icon so it’s easy to reach.
+3. Turn on “Developer mode” (top-right corner).
+4. Click “Load unpacked”.
+5. Select the downloaded folder.
+6. (Optional) Pin the NilMode icon so it’s easy to access.
 
-To remove: go back to chrome://extensions and remove it.
-
-To update (if you change files): on the same page press the Reload button on the extension card.
-
----
-
-## How To Use
-1. Click the extension icon. A small window (popup) appears with three tabs: Facebook, YouTube, Settings.
-2. For each platform, choose what to block or hide:
-	- Block Facebook / Block YouTube: sends you to a simple motivational page instead of opening the site.
-	- Hide Feed / Hide Stories (Facebook): removes the infinite scroll areas.
-	- Productive Facebook (experimental): adds a ❌ button next to each post author (future: quick dismiss or focus tools).
-	- Hide Recommendations / Shorts / Comments / Next Suggestions (YouTube): strips away the usual rabbit holes.
-3. Open or refresh the site—changes apply immediately.
-4. Want a temporary break from all blocking? Open the Settings tab and toggle “Pause”.
-5. Set how many minutes the pause should last (defaults to 5). When time expires, blocking resumes automatically.
-6. Uncheck any box to bring that section back (may need a quick refresh if the site is heavily cached).
-
-Tip: Start with hiding only the pieces that waste your time most. You can always add more.
+To remove: go back to chrome://extensions and click Remove.
+To refresh after changes: press the Reload icon on the extension card.
 
 ---
 
-## What You’ll See When Blocking
-If you try to open a blocked site you’ll land on a neutral page with a short message and a quote. That’s intentional—quick pattern interrupt, no drama.
+## How to Use
+1. Click the extension icon. You’ll see three tabs: Facebook, YouTube, Settings.
+2. Turn on only the switches you need.
+3. Refresh the site tab to see changes (usually automatic, but refresh helps).
+4. Want to track a YouTube playlist? Go to a playlist page and click “Start Course”.
+5. Check off videos as you finish them. Progress updates instantly.
+6. Finished a playlist? It moves into the Completed section (you can collapse it).
+7. Don’t want playlist tracking for now? Turn off “Enable Course Playlists” and the whole feature disappears.
+8. Need a break from blocking? Go to Settings → Pause → choose minutes.
+9. Come back later, uncheck anything you want to restore.
 
 ---
 
-## If Something Looks Broken
-- A section you hid won’t come back: uncheck its box and refresh the page.
-- Nothing happens at all: make sure the extension is still loaded (chrome://extensions) and reload the page.
-- Still stuck: turn off all toggles, refresh, then re-enable only one to isolate.
+Enjoy your focus.
+Build, learn, or rest—on purpose.
 
-This extension is intentionally minimal—no accounts, no syncing beyond your browser’s own sync feature.
-
----
-
-## FAQ (Short)
-**Does this track me?** No.
-
-**Will updates to Facebook or YouTube break hiding?** Occasionally. If something stops hiding, just leave it unchecked until a future version.
-
-**Can I pause it?** Yes—use the Pause toggle and choose minutes.
-
-**Can I add other sites?** Not in this simplified version.
-
-**Does it work in other browsers?** Should work in Chromium-based browsers that support Manifest V3.
-
-**Was this readme generated by AI?** Obviously😒
-
----
-
-## License
-MIT. Use it, change it, share it. No warranty.
-
----
-
-Use it to reduce noise. Focus on building, learning, or resting on purpose.
+License: MIT (do whatever, no warranty).
 
