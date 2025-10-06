@@ -60,7 +60,7 @@ function runContentFilters() {
       applyVisibility('ytd-rich-section-renderer.style-scope.ytd-rich-grid-renderer', !!data.hideYTShorts);
       if (url.includes('watch')) {
         applyVisibility('ytd-comments#comments', !!data.hideYTComments);
-        applyVisibility('div#secondary', !!data.hideYTNext);
+        applyVisibility('#related #items', !!data.hideYTNext);
       }
       if (data.ytCourseMode !== false) {
         maybeInjectYouTubePlaylistButtons(data.ytPlaylists || []);

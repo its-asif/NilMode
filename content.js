@@ -127,7 +127,7 @@ function runContentFilters() {
       if (url.includes("watch")) {
         // Per user provided mapping
         applyVisibility("ytd-comments#comments", !!data.hideYTComments); // comments
-        applyVisibility("div#secondary", !!data.hideYTNext); // next suggestions
+        applyVisibility("#related #items", !!data.hideYTNext); // next suggestions
       }
 
       // Inject YouTube playlist management buttons (Start Course)
