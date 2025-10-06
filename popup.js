@@ -130,4 +130,70 @@ chrome.storage.onChanged.addListener((changes, area) => {
   if(changes.fbBlacklist){
     renderFbBlacklist(changes.fbBlacklist.newValue || []);
   }
+  if(changes.ytPlaylists){
+    renderYtPlaylists(changes.ytPlaylists.newValue || []);
+  }
+});
+
+// === YouTube Playlists UI ===
+const ytListEl = document.getElementById('ytPlaylistsList');
+const ytEmptyEl = document.getElementById('ytPlaylistsEmpty');
+const ytClearBtn = document.getElementById('ytPlaylistsClear');
+
+function renderYtPlaylists(list){
+  if(!ytListEl) return;
+  ytListEl.innerHTML = '';
+  const arr = Array.isArray(list) ? list.slice() : [];
+  arr.sort((a,b)=> (b.addedAt||0) - (a.addedAt||0));
+  if(arr.length === 0){
+    if(ytEmptyEl) ytEmptyEl.style.display = 'block';
+    if(ytClearBtn) ytClearBtn.style.display = 'none';
+    return;
+  }
+  if(ytEmptyEl) ytEmptyEl.style.display = 'none';
+  if(ytClearBtn) ytClearBtn.style.display = 'inline-block';
+  arr.forEach(pl => {
+    const li = document.createElement('li');
+    li.style.margin = '2px 0';
+    li.style.display = 'flex';
+    li.style.alignItems = 'center';
+    li.style.gap = '4px';
+    const link = document.createElement('a');
+    link.textContent = pl.title || pl.id || 'Untitled playlist';
+    link.href = pl.url || ('https://www.youtube.com/playlist?list=' + encodeURIComponent(pl.id));
+    link.target = '_blank';
+    link.style.flex = '1';
+    link.style.textDecoration = 'none';
+    link.style.color = '#065fd4';
+    const removeBtn = document.createElement('button');
+    removeBtn.textContent = '✕';
+    removeBtn.title = 'Remove playlist';
+    removeBtn.style.border = 'none';
+    removeBtn.style.background = '#eee';
+    removeBtn.style.cursor = 'pointer';
+    removeBtn.style.padding = '0 6px';
+    removeBtn.style.borderRadius = '3px';
+    removeBtn.addEventListener('click', () => {
+      chrome.storage.sync.get(['ytPlaylists'], data => {
+        const current = Array.isArray(data.ytPlaylists) ? data.ytPlaylists : [];
+        const next = current.filter(p => p.id !== pl.id);
+        chrome.storage.sync.set({ ytPlaylists: next });
+      });
+    });
+    li.appendChild(link);
+    li.appendChild(removeBtn);
+    ytListEl.appendChild(li);
+  });
+}
+
+if(ytClearBtn){
+  ytClearBtn.addEventListener('click', () => {
+    if(confirm('Clear all saved playlists?')){
+      chrome.storage.sync.set({ ytPlaylists: [] });
+    }
+  });
+}
+
+chrome.storage.sync.get(['ytPlaylists'], data => {
+  renderYtPlaylists(data.ytPlaylists || []);
 });
