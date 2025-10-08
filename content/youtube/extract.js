@@ -26,7 +26,7 @@ function extractPlaylistStatsFromDom(){
 }
 function extractWatchPlaylistStatsFromDom(){
   try {
-    const itemNodes = document.querySelectorAll('#playlist-items ytd-playlist-panel-video-renderer');
+    const itemNodes = document.querySelectorAll('#playlist-items');
     const videoCount = itemNodes.length;
     let totalSeconds = 0;
     const videoDurations = {};

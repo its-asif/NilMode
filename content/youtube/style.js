@@ -32,7 +32,7 @@ function ensurePlaylistButtonStyles(){
   .ndx-yt-completed-text{font-weight:500;font-size:12px;min-width:90px;}
   .ndx-yt-progress-meta{display:flex;justify-content:space-between;align-items:center;font-size:11px;opacity:.85;font-weight:500;gap:8px;}
   .ndx-yt-progress-meta span{white-space:nowrap;}
-  .ndx-yt-progress-summary{text-align:center;font-size:11px;margin-top:4px;opacity:.9;font-weight:500;}
+  .ndx-yt-progress-summary{text-align:center;font-size:11px;margin-top:4px;margin-right:12%;opacity:.9;font-weight:500;}
     /* Progress checkbox styling */
   .ndx-course-check-host {display:flex;align-items:center;margin:0 4px 0 2px;}
   .ndx-course-check {appearance:none;-webkit-appearance:none;outline:none;cursor:pointer;width:20px;height:20px;padding:10px;border:2px solid #334155;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;position:relative;background:radial-gradient(circle at 50% 50%,rgba(255,255,255,0.15),rgba(255,255,255,0));transition:border-color .25s, background .35s, box-shadow .25s;}

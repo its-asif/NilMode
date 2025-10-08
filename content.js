@@ -591,6 +591,7 @@ function ensurePlaylistButtonStyles(){
 function extractPlaylistStatsFromDom(){
   try {
     const videoEls = document.querySelectorAll('#contents > ytd-playlist-video-renderer');
+    console.log(videoEls);
     if (!videoEls.length) return null;
     const videoCount = videoEls.length;
     let totalSeconds = 0;
@@ -608,8 +609,10 @@ function extractPlaylistStatsFromDom(){
 // Extract stats for watch page sidebar playlist variant
 function extractWatchPlaylistStatsFromDom(){
   try {
-    const itemNodes = document.querySelectorAll('#playlist-items ytd-playlist-panel-video-renderer');
+    const itemNodes = document.querySelectorAll('#playlist-items');
+    console.log(itemNodes);
     const videoCount = itemNodes.length;
+    console.log(videoCount)
     const badgeNodes = document.querySelectorAll('#playlist-items .yt-badge-shape__text');
     let totalSeconds = 0;
     badgeNodes.forEach(node => {
@@ -682,6 +685,7 @@ function populateWatchPlaylistStats(box, playlistId, list){
   let totalDurationSeconds = entry.totalDurationSeconds;
   if (videoCount == null || totalDurationSeconds == null) {
     const stats = extractWatchPlaylistStatsFromDom();
+    console.log(stats);
     if (stats) {
       videoCount = stats.videoCount;
       totalDurationSeconds = stats.totalDurationSeconds;
@@ -754,6 +758,7 @@ function attachWatchPlaylistBoxHandlers(box, playlistId){
   if (updateBtn) {
     updateBtn.addEventListener('click', () => {
       const stats = extractWatchPlaylistStatsFromDom();
+      console.log(stats);
       if (!stats) { alert('Could not extract stats. Scroll playlist?'); return; }
       chrome.storage.sync.get(['ytPlaylists'], data => {
         const arr = Array.isArray(data.ytPlaylists)? data.ytPlaylists: [];

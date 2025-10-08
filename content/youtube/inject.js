@@ -51,6 +51,10 @@ function maybeInjectYouTubePlaylistButtons(existingList){
             <div class="ndx-yt-progress-summary">0% completed • … left</div>`;
           headerContents.appendChild(box);
           box.dataset.playlistId = playlistId;
+          // Prevent clicks inside our box from bubbling and collapsing the native playlist panel
+          ['click','mousedown','mouseup'].forEach(ev => {
+            box.addEventListener(ev, e => { e.stopPropagation(); });
+          });
           populateWatchPlaylistStats(box, playlistId, existingList);
           attachWatchPlaylistBoxHandlers(box, playlistId);
         }
@@ -58,7 +62,8 @@ function maybeInjectYouTubePlaylistButtons(existingList){
         const btn = document.createElement('button');
         btn.textContent = 'Start Course';
         btn.className = 'ndx-yt-course-btn ndx-yt-course-btn-watch';
-        btn.addEventListener('click', () => saveYouTubePlaylist(playlistId, 'watch'));
+        btn.addEventListener('click', (e) => { e.stopPropagation(); saveYouTubePlaylist(playlistId, 'watch'); });
+        ['mousedown','mouseup'].forEach(ev => btn.addEventListener(ev, e => e.stopPropagation()));
         h3.appendChild(btn);
       }
     }
