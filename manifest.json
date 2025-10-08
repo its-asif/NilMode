@@ -37,6 +37,7 @@
         "content/youtube/handlers.js",
         "content/youtube/save.js",
         "content/youtube/inject.js",
+        "content/pauseOverlay.js",
         "content/init.js"
       ]
     }

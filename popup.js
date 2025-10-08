@@ -53,11 +53,49 @@ toggles.forEach(id => {
   });
   el.addEventListener("change", () => {
     const update = { [id]: el.checked };
-    if(id === 'pauseToggle' && el.checked === false){
-      update.pauseUntil = null; // ensure cleared when manually unpausing
+    if(id === 'pauseToggle'){
+      if(el.checked){
+        chrome.storage.sync.get(['pauseMinutes'], d => {
+          const minutes = d.pauseMinutes || 5;
+          const reason = (prompt('Why are you pausing?', '') || '').trim();
+          const pauseUntil = Date.now() + minutes*60*1000;
+          chrome.storage.sync.set({ pauseToggle:true, pauseUntil, pauseReason: reason || 'Reminder' });
+        });
+        return; // early exit; handled async
+      } else {
+        update.pauseUntil = null;
+        update.pauseReason = null;
+      }
     }
     chrome.storage.sync.set(update);
   });
+});
+
+// Reflect pause state text (optional UX improvement)
+const pauseToggleEl = document.getElementById('pauseToggle');
+function syncPauseLabel(){
+  if(!pauseToggleEl) return;
+  const label = pauseToggleEl.closest('label');
+  chrome.storage.sync.get(['pauseToggle','pauseReason','pauseUntil'], data => {
+    if(!label) return;
+    if(data.pauseToggle && data.pauseUntil && Date.now() < data.pauseUntil){
+      label.dataset.originalText = label.dataset.originalText || label.textContent;
+      const remMs = data.pauseUntil - Date.now();
+      const minsLeft = Math.max(0, Math.floor(remMs/60000));
+      label.textContent = `Pause (\u2713 Running${data.pauseReason? ': '+ data.pauseReason: ''}${minsLeft? ' ~'+minsLeft+'m':''})`;
+    } else if(label.dataset.originalText){
+      label.textContent = label.dataset.originalText;
+    }
+  });
+}
+if(pauseToggleEl){
+  syncPauseLabel();
+  setInterval(syncPauseLabel, 30000); // update every 30s (lightweight)
+}
+chrome.storage.onChanged.addListener((changes, area)=>{
+  if(area==='sync' && (changes.pauseToggle || changes.pauseReason || changes.pauseUntil)){
+    syncPauseLabel();
+  }
 });
 
 // === Pause Minutes ===

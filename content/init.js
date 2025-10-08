@@ -4,7 +4,7 @@ function runContentFilters() {
   chrome.storage.sync.get([
     'hideFacebookFeed','hideFacebookStories','hideRightSidebar',
     'hideYTRecs','hideYTShorts','hideYTComments','hideYTNext',
-    'pauseToggle','pauseUntil',
+    'pauseToggle','pauseUntil','pauseReason',
     'productiveFacebook',
     'fbBlacklist',
   'hideSponsoredPosts',
@@ -83,6 +83,6 @@ const observer = new MutationObserver(() => {
 observer.observe(document.body, { childList:true, subtree:true });
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area !== 'sync') return;
-  const relevant = ['hideFacebookFeed','hideFacebookStories','hideRightSidebar','hideYTRecs','hideYTShorts','hideYTComments','hideYTNext','pauseToggle','pauseUntil','productiveFacebook','fbBlacklist','hideSponsoredPosts','ytPlaylists','ytCourseMode'];
+  const relevant = ['hideFacebookFeed','hideFacebookStories','hideRightSidebar','hideYTRecs','hideYTShorts','hideYTComments','hideYTNext','pauseToggle','pauseUntil','pauseReason','productiveFacebook','fbBlacklist','hideSponsoredPosts','ytPlaylists','ytCourseMode'];
   if (Object.keys(changes).some(k => relevant.includes(k))) runContentFilters();
 });
