@@ -1,8 +1,9 @@
-// init.js - orchestrates feature execution for both Facebook & YouTube
+// orchestrates feature execution for both Facebook & YouTube
 
 function runContentFilters() {
   chrome.storage.sync.get([
     'hideFacebookFeed','hideFacebookStories','hideRightSidebar',
+    'hideFacebookReelsPage',
     'hideYTRecs','hideYTShorts','hideYTComments','hideYTNext',
     'pauseToggle','pauseUntil','pauseReason',
     'productiveFacebook',
@@ -21,8 +22,16 @@ function runContentFilters() {
     }
     const url = location.href;
 
-    // Facebook
+    // facebook
     if (url.includes('facebook.com')) {
+      // Redirect dedicated reels pages if enabled (fallback if background didn't catch)
+      const isReelsPage = /^https?:\/\/(www\.)?facebook\.com\/reel\//.test(url);
+      if (isReelsPage && data.hideFacebookReelsPage) {
+        if (!/blocked\.html/.test(url)) {
+          location.replace(chrome.runtime.getURL('blocked.html?site=facebook'));
+        }
+        return; // Skip other FB logic
+      }
       applyVisibility('.x1hc1fzr.x1unhpq9.x6o7n8i', !!data.hideFacebookFeed);
       const hideStories = !!data.hideFacebookStories;
       if (hideStories) {
@@ -53,7 +62,7 @@ function runContentFilters() {
       }
     }
 
-    // YouTube
+    // youtube
     if (url.includes('youtube.com')) {
       const isHome = (/^https?:\/\/(www\.)?youtube\.com\/?(\?|$)/).test(url);
       if (isHome) applyVisibility('ytd-browse.style-scope.ytd-page-manager', !!data.hideYTRecs); else applyVisibility('ytd-browse.style-scope.ytd-page-manager', false);
@@ -75,7 +84,7 @@ function runContentFilters() {
 }
 
 document.addEventListener('DOMContentLoaded', runContentFilters);
-// Return to immediate observer but gate expensive playlist checkbox injection
+// return to immediate observer but gate expensive playlist checkbox injection
 let __ndxLastUrlProcessedForPlaylist = '';
 const observer = new MutationObserver(() => {
   runContentFilters();

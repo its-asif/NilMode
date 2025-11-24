@@ -98,46 +98,92 @@ function ndxInjectCompletionCheckboxes(existingList){
   const menus = document.querySelectorAll('#menu.style-scope.ytd-playlist-video-renderer, #menu.style-scope.ytd-playlist-panel-video-renderer');
   let injectedAny = false;
   menus.forEach(menu => {
-    if(menu.classList.contains('ndx-course-menu-aug')) return; // already processed
-    menu.classList.add('ndx-course-menu-aug');
-    menu.style.display = 'flex';
-    menu.style.justifyContent = 'center';
-    menu.style.alignItems = 'center';
-    menu.style.flexDirection = 'row';
-    injectedAny = true;
+    // Ensure menu container has our flex styling
+    if(!menu.classList.contains('ndx-course-menu-aug')){
+      menu.classList.add('ndx-course-menu-aug');
+      menu.style.display = 'flex';
+      menu.style.justifyContent = 'center';
+      menu.style.alignItems = 'center';
+      menu.style.flexDirection = 'row';
+    }
 
-    const host = document.createElement('div');
-    host.className = 'ndx-course-check-host';
-    const cb = document.createElement('input');
-    cb.type = 'checkbox';
-    cb.title = 'Mark video completed';
-    cb.className = 'ndx-course-check';
-    // derive video id from parent anchor if possible
-    let videoId = '';
-    try {
-      const parentRenderer = menu.closest('ytd-playlist-video-renderer, ytd-playlist-panel-video-renderer');
-      if(parentRenderer){
-        // Try standard thumbnail anchor first
-        let a = parentRenderer.querySelector('a#thumbnail');
-        if(!a) {
-          // Fallback: any anchor with a watch URL
-            a = Array.from(parentRenderer.querySelectorAll('a')).find(el => el.href && el.href.includes('watch?v='));
+    // If checkbox host is missing (e.g., panel re-rendered and children were replaced), re-insert
+    if(!menu.querySelector('.ndx-course-check-host')){
+      injectedAny = true;
+      const host = document.createElement('div');
+      host.className = 'ndx-course-check-host';
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.title = 'Mark video completed';
+      cb.className = 'ndx-course-check';
+      // derive video id from parent anchor if possible
+      let videoId = '';
+      try {
+        const parentRenderer = menu.closest('ytd-playlist-video-renderer, ytd-playlist-panel-video-renderer');
+        if(parentRenderer){
+          // Try standard thumbnail anchor first
+          let a = parentRenderer.querySelector('a#thumbnail');
+          if(!a) {
+            // Fallback: any anchor with a watch URL
+              a = Array.from(parentRenderer.querySelectorAll('a')).find(el => el.href && el.href.includes('watch?v='));
+          }
+          if(a && a.href){
+            const pu = new URL(a.href);
+            videoId = pu.searchParams.get('v') || '';
+          }
         }
-        if(a && a.href){
-          const pu = new URL(a.href);
-          videoId = pu.searchParams.get('v') || '';
-        }
-      }
-    } catch(_){ }
-    if(videoId && completed.has(videoId)) cb.checked = true;
-    cb.addEventListener('change', () => ndxComputeAndStoreProgress(playlistId, videoId, cb.checked));
+      } catch(_){ }
+      if(videoId && completed.has(videoId)) cb.checked = true;
+      cb.addEventListener('change', () => ndxComputeAndStoreProgress(playlistId, videoId, cb.checked));
 
-    host.appendChild(cb);
-    menu.prepend(host);
+      host.appendChild(cb);
+      menu.prepend(host);
+    }
   });
 
   // After all checkboxes, update progress bars once
   if(entry && typeof entry.progressPct === 'number' && injectedAny){
     ndxRefreshProgressBars(entry);
   }
+}
+
+// ----- Resilient maintenance: periodic + re-render detection (type-2 watch panel) -----
+let ndxCheckboxIntervalId = null;
+let ndxInjectDebounce = null;
+function ndxScheduleInject(delay = 120){
+  if(ndxInjectDebounce) return;
+  ndxInjectDebounce = setTimeout(() => {
+    ndxInjectDebounce = null;
+    chrome.storage.sync.get(['ytPlaylists'], data => ndxInjectCompletionCheckboxes(data.ytPlaylists));
+  }, delay);
+}
+
+function ndxStartCheckboxMaintenance(){
+  if(!ndxCheckboxIntervalId){
+    ndxCheckboxIntervalId = setInterval(() => {
+      // Every second, ensure checkboxes exist (covers silent DOM swaps)
+      chrome.storage.sync.get(['ytPlaylists'], data => ndxInjectCompletionCheckboxes(data.ytPlaylists));
+    }, 1000);
+  }
+  // Observe the watch playlist panel (type-2) for re-renders
+  const tryObserve = () => {
+    const panel = document.querySelector('ytd-playlist-panel-renderer');
+    if(panel && !panel.dataset.ndxObserved){
+      panel.dataset.ndxObserved = '1';
+      const obs = new MutationObserver(() => ndxScheduleInject(100));
+      obs.observe(panel, { childList: true, subtree: true });
+    }
+  };
+  tryObserve();
+  // Also hook YouTube SPA navigation events to re-try observing
+  window.addEventListener('yt-navigate-finish', () => {
+    setTimeout(() => { tryObserve(); ndxScheduleInject(50); }, 50);
+  });
+}
+
+// Init when ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => { ndxStartCheckboxMaintenance(); ndxScheduleInject(0); });
+} else {
+  ndxStartCheckboxMaintenance(); ndxScheduleInject(0);
 }

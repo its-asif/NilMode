@@ -1,7 +1,7 @@
 // background.js
 chrome.webNavigation.onBeforeNavigate.addListener(details => {
   chrome.storage.sync.get(
-    ["blockFacebook", "blockYouTube", "pauseToggle", "pauseUntil"],
+    ["blockFacebook", "blockYouTube", "pauseToggle", "pauseUntil", "hideFacebookReelsPage"],
     data => {
       // Pause logic with timestamp validation
       if (data.pauseToggle) {
@@ -14,11 +14,20 @@ chrome.webNavigation.onBeforeNavigate.addListener(details => {
         }
       }
 
-      // Block Facebook
+      // Block Facebook (full site)
       if (data.blockFacebook && details.url.includes("facebook.com")) {
         chrome.tabs.update(details.tabId, {
           url: chrome.runtime.getURL("blocked.html?site=facebook")
         });
+        return;
+      }
+
+      // Redirect individual Reels pages if feature enabled
+      if (data.hideFacebookReelsPage && /https?:\/\/(www\.)?facebook\.com\/reel\//.test(details.url)) {
+        chrome.tabs.update(details.tabId, {
+          url: chrome.runtime.getURL("blocked.html?site=facebook")
+        });
+        return;
       }
 
       // Block YouTube

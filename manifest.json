@@ -10,12 +10,12 @@
   ],
   "action": {
     "default_popup": "popup.html",
-    "default_icon": "./assets/icon.png"
+    "default_icon": "assets/icon.png"
   },
   "icons": {
-    "16": "./assets/icon.png",
-    "48": "./assets/icon.png",
-    "128": "./assets/icon.png"
+    "16": "assets/icon.png",
+    "48": "assets/icon.png",
+    "128": "assets/icon.png"
   },
   "background": {
     "service_worker": "background.js"
@@ -31,8 +31,8 @@
         "content/facebook/reels.js",
         "content/youtube/style.js",
         "content/youtube/time.js",
-  "content/youtube/extract.js",
-  "content/youtube/progress.js",
+        "content/youtube/extract.js",
+        "content/youtube/progress.js",
         "content/youtube/statsPopulate.js",
         "content/youtube/handlers.js",
         "content/youtube/save.js",

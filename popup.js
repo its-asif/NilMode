@@ -33,6 +33,7 @@ try {
 // === SAVE STATE TO STORAGE ===
 const toggles = [
   "blockFacebook", "hideFacebookFeed", "hideFacebookStories", "hideRightSidebar",
+  "hideFacebookReelsPage",
   "blockYouTube", "hideYTRecs", "hideYTShorts", "hideYTComments", "hideYTNext", "ytCourseMode",
   "pauseToggle",
   // New feature toggle

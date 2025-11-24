@@ -25,7 +25,7 @@ function saveYouTubePlaylist(id, source){
     } catch(_){ }
     const entry = { id, title, url: canonicalUrl, addedAt: Date.now(), source, videoCount, totalDurationSeconds, videoDurations };
     const estimatedSize = JSON.stringify([...list, entry]).length;
-    if (estimatedSize > 7000) { alert('Playlist storage near limit. Consider pruning.'); return; }
+    if (estimatedSize > 9000) { alert('Playlist storage near limit. Consider pruning.'); return; }
     list.push(entry);
     chrome.storage.sync.set({ ytPlaylists: list }, () => {
       if (source === 'pure') {
