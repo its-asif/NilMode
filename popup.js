@@ -37,9 +37,7 @@ const toggles = [
   "blockYouTube", "hideYTRecs", "hideYTShorts", "hideYTComments", "hideYTNext", "ytCourseMode",
   "pauseToggle",
   // New feature toggle
-  "productiveFacebook",
-  // Hide sponsored posts
-  "hideSponsoredPosts"
+  "productiveFacebook"
 ];
 
 toggles.forEach(id => {

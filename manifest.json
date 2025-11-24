@@ -27,7 +27,6 @@
         "content/utils.js",
         "content/facebook/productive.js",
         "content/facebook/blacklist.js",
-        "content/facebook/sponsored.js",
         "content/facebook/reels.js",
         "content/youtube/style.js",
         "content/youtube/time.js",

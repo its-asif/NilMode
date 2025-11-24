@@ -8,7 +8,6 @@ function runContentFilters() {
     'pauseToggle','pauseUntil','pauseReason',
     'productiveFacebook',
     'fbBlacklist',
-  'hideSponsoredPosts',
   'ytPlaylists',
   'ytCourseMode'
   ], data => {
@@ -54,11 +53,9 @@ function runContentFilters() {
             delete post.dataset.ndxBlHidden;
           });
         }
-        if (data.hideSponsoredPosts) hideSponsoredPosts(); else restoreSponsoredPosts();
       } else {
         document.querySelectorAll('.ndx-pf-btn').forEach(btn => btn.remove());
         document.querySelectorAll('.x1lliihq[data-ndx-bl-hidden="1"]').forEach(post => { post.style.display = ''; delete post.dataset.ndxBlHidden; });
-        restoreSponsoredPosts();
       }
     }
 
@@ -92,6 +89,6 @@ const observer = new MutationObserver(() => {
 observer.observe(document.body, { childList:true, subtree:true });
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area !== 'sync') return;
-  const relevant = ['hideFacebookFeed','hideFacebookStories','hideRightSidebar','hideYTRecs','hideYTShorts','hideYTComments','hideYTNext','pauseToggle','pauseUntil','pauseReason','productiveFacebook','fbBlacklist','hideSponsoredPosts','ytPlaylists','ytCourseMode'];
+  const relevant = ['hideFacebookFeed','hideFacebookStories','hideRightSidebar','hideYTRecs','hideYTShorts','hideYTComments','hideYTNext','pauseToggle','pauseUntil','pauseReason','productiveFacebook','fbBlacklist','ytPlaylists','ytCourseMode'];
   if (Object.keys(changes).some(k => relevant.includes(k))) runContentFilters();
 });

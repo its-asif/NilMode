@@ -15,9 +15,9 @@ Simple switches. No accounts. No clutter.
 
 ## Features
 Facebook:
-- Block the whole site OR selectively hide: Feed, Stories (also hides Reels), Right Sidebar, Sponsored Posts.
+- Block the whole site OR selectively hide: Feed, Stories (also hides Reels), Right Sidebar.
 - Productive Mode: adds a ❌ button + personal blacklist (hide posts from chosen people, pages, or groups).
-- Blank Reels Pages: optional toggle to render dedicated /reel/ pages empty (hard interruption).
+- Reels Intercept: redirects dedicated /reel/ pages to the focus message screen.
 
 YouTube (Viewing):
 - Block the whole site OR hide distractions: Home Recommendations, Shorts, Comments, “Up Next” sidebar.
