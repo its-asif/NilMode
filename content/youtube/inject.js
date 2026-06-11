@@ -8,7 +8,7 @@ function maybeInjectYouTubePlaylistButtons(existingList){
   if (!isPurePlaylist && !isWatchWithPlaylist) return; // nothing to do
   ensurePlaylistButtonStyles();
   if (isPurePlaylist) {
-    const container = document.querySelector('#page-manager > ytd-browse > yt-page-header-renderer > yt-page-header-view-model > div.yt-page-header-view-model__scroll-container > div')
+    const container = document.querySelector('#page-manager > ytd-browse > yt-page-header-renderer > yt-page-header-view-model > div.ytPageHeaderViewModelScrollContainer > div')
       || document.querySelector('#page-manager > ytd-browse > ytd-playlist-header-renderer > div > div.immersive-header-content.style-scope.ytd-playlist-header-renderer > div.thumbnail-and-metadata-wrapper.style-scope.ytd-playlist-header-renderer');
     if (container) {
       const alreadySaved = Array.isArray(existingList) && existingList.some(p => p.id === playlistId);
@@ -17,10 +17,23 @@ function maybeInjectYouTubePlaylistButtons(existingList){
           const box = document.createElement('div');
           box.className = 'ndx-yt-course-box';
           box.innerHTML = `
-            <div class="ndx-yt-course-box-row" data-role="counts">Videos: <span class="ndx-yt-count">…</span></div>
-            <div class="ndx-yt-course-box-row" data-role="duration">Total: <span class="ndx-yt-duration">…</span></div>
-            <div class="ndx-yt-course-box-row" data-role="progress"><span class="ndx-yt-completed-text">0/… Completed</span><div class="ndx-yt-progress"><div class="ndx-yt-progress-bar" style="width:0%"></div></div></div>
-            <div class="ndx-yt-course-box-row ndx-yt-course-actions"><button class="ndx-yt-course-update">Update</button><button class="ndx-yt-course-delete">Delete</button></div>`;
+            <div class="ndx-yt-badge-row">
+              <div class="ndx-yt-badge">🎓 <span class="ndx-yt-count">…</span> videos</div>
+              <div class="ndx-yt-badge">⏱️ <span class="ndx-yt-duration">…</span></div>
+            </div>
+            <div class="ndx-yt-progress-section">
+              <div class="ndx-yt-progress-label">
+                <span class="ndx-yt-completed-text">0/… Completed</span>
+                <span class="ndx-yt-pct-text">0%</span>
+              </div>
+              <div class="ndx-yt-progress">
+                <div class="ndx-yt-progress-bar" style="width:0%"></div>
+              </div>
+            </div>
+            <div class="ndx-yt-course-actions">
+              <button class="ndx-yt-course-update">🔄 Sync Stats</button>
+              <button class="ndx-yt-course-delete">🗑️ Remove</button>
+            </div>`;
           container.appendChild(box);
           box.dataset.playlistId = playlistId;
           populatePlaylistStats(box, playlistId, existingList);
@@ -28,7 +41,7 @@ function maybeInjectYouTubePlaylistButtons(existingList){
         }
       } else if (!container.querySelector('.ndx-yt-course-btn-pure')) {
         const a = document.createElement('a');
-        a.textContent = 'Start Course';
+        a.textContent = '🎓 Start Course';
         a.href = 'javascript:void(0)';
         a.className = 'ndx-yt-course-btn ndx-yt-course-btn-pure';
         a.addEventListener('click', () => saveYouTubePlaylist(playlistId, 'pure', existingList));
@@ -46,9 +59,18 @@ function maybeInjectYouTubePlaylistButtons(existingList){
           const box = document.createElement('div');
           box.className = 'ndx-yt-course-box-watch';
           box.innerHTML = `
-            <div class="ndx-yt-course-box-watch-actions-corner"><button class="ndx-yt-icon-btn ndx-yt-course-update-watch" title="Update stats">↻</button><button class="ndx-yt-icon-btn ndx-yt-course-delete-watch" title="Delete saved playlist">✕</button></div>
-            <div class="ndx-yt-progress-meta"><span class="ndx-yt-progress-time-done">0s</span><span class="ndx-yt-progress-videos">0/… watched</span><span class="ndx-yt-progress-time-total">…</span></div>
-            <div class="ndx-yt-progress ndx-yt-progress-barline"><div class="ndx-yt-progress-bar" style="width:0%"></div></div>
+            <div class="ndx-yt-course-box-watch-actions-corner">
+              <button class="ndx-yt-icon-btn ndx-yt-course-update-watch" title="Update stats">↻</button>
+              <button class="ndx-yt-icon-btn ndx-yt-course-delete-watch" title="Delete saved playlist">✕</button>
+            </div>
+            <div class="ndx-yt-progress-meta">
+              <span class="ndx-yt-progress-time-done">0s</span>
+              <span class="ndx-yt-progress-videos">0/… watched</span>
+              <span class="ndx-yt-progress-time-total">…</span>
+            </div>
+            <div class="ndx-yt-progress ndx-yt-progress-barline">
+              <div class="ndx-yt-progress-bar" style="width:0%"></div>
+            </div>
             <div class="ndx-yt-progress-summary">0% completed • … left</div>`;
           headerContents.appendChild(box);
           box.dataset.playlistId = playlistId;
@@ -61,7 +83,7 @@ function maybeInjectYouTubePlaylistButtons(existingList){
         }
       } else if (!h3.querySelector('.ndx-yt-course-btn-watch')) {
         const btn = document.createElement('button');
-        btn.textContent = 'Start Course';
+        btn.textContent = '🎓 Start Course';
         btn.className = 'ndx-yt-course-btn ndx-yt-course-btn-watch';
         btn.addEventListener('click', (e) => { e.stopPropagation(); saveYouTubePlaylist(playlistId, 'watch'); });
         ['mousedown','mouseup'].forEach(ev => btn.addEventListener(ev, e => e.stopPropagation()));

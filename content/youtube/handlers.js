@@ -30,7 +30,7 @@ function attachPlaylistBoxHandlers(box, playlistId){
         const next = arr.filter(p=>p.id!==playlistId);
         chrome.storage.local.set({ ytPlaylists: next }, () => {
           box.remove();
-          const container = document.querySelector('#page-manager > ytd-browse > yt-page-header-renderer > yt-page-header-view-model > div.yt-page-header-view-model__scroll-container > div')
+          const container = document.querySelector('#page-manager > ytd-browse > yt-page-header-renderer > yt-page-header-view-model > div.ytPageHeaderViewModelScrollContainer > div')
             || document.querySelector('#page-manager > ytd-browse > ytd-playlist-header-renderer > div > div.immersive-header-content.style-scope.ytd-playlist-header-renderer > div.thumbnail-and-metadata-wrapper.style-scope.ytd-playlist-header-renderer');
           if (container && !container.querySelector('.ndx-yt-course-btn-pure')) {
             const a = document.createElement('a');

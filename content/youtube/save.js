@@ -1,9 +1,9 @@
 // Save playlist entry & create stats box
-function saveYouTubePlaylist(id, source){
+function saveYouTubePlaylist(id, source) {
   if (!id) return;
   const canonicalUrl = `https://www.youtube.com/playlist?list=${id}`;
   let title = '';
-  const pureTitleEl = document.querySelector('#page-manager > ytd-browse > yt-page-header-renderer > yt-page-header-view-model > div.yt-page-header-view-model__scroll-container > div > div.yt-page-header-view-model__page-header-headline > div > yt-dynamic-text-view-model > h1 > span');
+  const pureTitleEl = document.querySelector('#page-manager > ytd-browse > yt-page-header-renderer > yt-page-header-view-model > div.ytPageHeaderViewModelScrollContainer > div > div.yt-page-header-view-model__page-header-headline > div > yt-dynamic-text-view-model > h1 > span');
   if (pureTitleEl && pureTitleEl.textContent.trim()) title = pureTitleEl.textContent.trim();
   if (!title) {
     const watchTitleAnchor = document.querySelector('#header-description > h3:nth-child(1) > yt-formatted-string > a');
@@ -13,7 +13,7 @@ function saveYouTubePlaylist(id, source){
   chrome.storage.local.get(['ytPlaylists'], data => {
     const list = Array.isArray(data.ytPlaylists) ? data.ytPlaylists : [];
     if (list.some(p => p.id === id)) return;
-  let videoCount = null; let totalDurationSeconds = null; let videoDurations = null;
+    let videoCount = null; let totalDurationSeconds = null; let videoDurations = null;
     try {
       if (source === 'pure') {
         const stats = extractPlaylistStatsFromDom();
@@ -22,25 +22,39 @@ function saveYouTubePlaylist(id, source){
         const stats = extractWatchPlaylistStatsFromDom();
         if (stats) { videoCount = stats.videoCount; totalDurationSeconds = stats.totalDurationSeconds; videoDurations = stats.videoDurations || {}; }
       }
-    } catch(_){ }
+    } catch (_) { }
     const entry = { id, title, url: canonicalUrl, addedAt: Date.now(), source, videoCount, totalDurationSeconds, videoDurations };
     const estimatedSize = JSON.stringify([...list, entry]).length;
     if (estimatedSize > 400000) { alert('Playlist storage near limit. Consider pruning.'); return; }
     list.push(entry);
     chrome.storage.local.set({ ytPlaylists: list }, () => {
       if (source === 'pure') {
-        const container = document.querySelector('#page-manager > ytd-browse > yt-page-header-renderer > yt-page-header-view-model > div.yt-page-header-view-model__scroll-container > div')
-          || document.querySelector('#page-manager > ytd-browse > ytd-playlist-header-renderer > div > div.immersive-header-content.style-scope.ytd-playlist-header-renderer > div.thumbnail-and-metadata-wrapper.style-scope.ytd-playlist-header-renderer');
+        const container = document.querySelector('#page-manager > ytd-browse > yt-page-header-renderer > yt-page-header-view-model > div.ytPageHeaderViewModelScrollContainer > div')
+          || document.querySelector('#page-manager > ytd-browse > ytd-playlist-header-renderer > div > div.immersive-header-content.style-scope.ytd-playlist-header-renderer > div.thumbnail-and-metadata-wrapper.style-scope.ytd-playlist-header-renderer')
+
         if (container) {
           const btn = container.querySelector('.ndx-yt-course-btn-pure');
           if (btn) btn.remove();
           const box = document.createElement('div');
           box.className = 'ndx-yt-course-box';
           box.innerHTML = `
-            <div class="ndx-yt-course-box-row" data-role="counts">Videos: <span class="ndx-yt-count">${videoCount ?? '…'}</span></div>
-            <div class="ndx-yt-course-box-row" data-role="duration">Total: <span class="ndx-yt-duration">${videoCount ? formatDuration(totalDurationSeconds) : '…'}</span></div>
-            <div class="ndx-yt-course-box-row" data-role="progress"><span class="ndx-yt-completed-text">0/${videoCount ?? '…'} Completed</span><div class="ndx-yt-progress"><div class="ndx-yt-progress-bar" style="width:0%"></div></div></div>
-            <div class="ndx-yt-course-box-row ndx-yt-course-actions"><button class="ndx-yt-course-update">Update</button><button class="ndx-yt-course-delete">Delete</button></div>`;
+            <div class="ndx-yt-badge-row">
+              <div class="ndx-yt-badge">🎓 <span class="ndx-yt-count">${videoCount ?? '…'}</span> videos</div>
+              <div class="ndx-yt-badge">⏱️ <span class="ndx-yt-duration">${videoCount ? formatDuration(totalDurationSeconds) : '…'}</span></div>
+            </div>
+            <div class="ndx-yt-progress-section">
+              <div class="ndx-yt-progress-label">
+                <span class="ndx-yt-completed-text">0/${videoCount ?? '…'} Completed</span>
+                <span class="ndx-yt-pct-text">0%</span>
+              </div>
+              <div class="ndx-yt-progress">
+                <div class="ndx-yt-progress-bar" style="width:0%"></div>
+              </div>
+            </div>
+            <div class="ndx-yt-course-actions">
+              <button class="ndx-yt-course-update">🔄 Sync Stats</button>
+              <button class="ndx-yt-course-delete">🗑️ Remove</button>
+            </div>`;
           container.appendChild(box);
           box.dataset.playlistId = id;
           populatePlaylistStats(box, id, [...list, entry]);
@@ -54,10 +68,19 @@ function saveYouTubePlaylist(id, source){
           const box = document.createElement('div');
           box.className = 'ndx-yt-course-box-watch';
           box.innerHTML = `
-            <div class="ndx-yt-course-box-watch-actions-corner"><button class="ndx-yt-icon-btn ndx-yt-course-update-watch" title="Update stats">↻</button><button class="ndx-yt-icon-btn ndx-yt-course-delete-watch" title="Delete saved playlist">✕</button></div>
-            <div class="ndx-yt-progress-meta"><span class="ndx-yt-progress-time-done">0s</span><span class="ndx-yt-progress-videos">0/${videoCount ?? '…'} watched</span><span class="ndx-yt-progress-time-total">${videoCount ? formatDuration(totalDurationSeconds) : '…'}</span></div>
-            <div class="ndx-yt-progress ndx-yt-progress-barline"><div class="ndx-yt-progress-bar" style="width:0%"></div></div>
-            <div class="ndx-yt-progress-summary">0% completed • ${videoCount ? (totalDurationSeconds? formatDuration(totalDurationSeconds) : '…') : '…'} left</div>`;
+            <div class="ndx-yt-course-box-watch-actions-corner">
+              <button class="ndx-yt-icon-btn ndx-yt-course-update-watch" title="Update stats">↻</button>
+              <button class="ndx-yt-icon-btn ndx-yt-course-delete-watch" title="Delete saved playlist">✕</button>
+            </div>
+            <div class="ndx-yt-progress-meta">
+              <span class="ndx-yt-progress-time-done">0s</span>
+              <span class="ndx-yt-progress-videos">0/${videoCount ?? '…'} watched</span>
+              <span class="ndx-yt-progress-time-total">${videoCount ? formatDuration(totalDurationSeconds) : '…'}</span>
+            </div>
+            <div class="ndx-yt-progress ndx-yt-progress-barline">
+              <div class="ndx-yt-progress-bar" style="width:0%"></div>
+            </div>
+            <div class="ndx-yt-progress-summary">0% completed • ${videoCount ? (totalDurationSeconds ? formatDuration(totalDurationSeconds) : '…') : '…'} left</div>`;
           headerContents.appendChild(box);
           box.dataset.playlistId = id;
           populateWatchPlaylistStats(box, id, [...list, entry]);

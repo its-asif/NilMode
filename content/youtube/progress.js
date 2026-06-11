@@ -53,6 +53,8 @@ function ndxRefreshProgressBars(entry) {
       const txt = box.querySelector('.ndx-yt-completed-text');
       const desiredCompleted = `${done}/${videoCount} Completed`;
       if (txt && txt.textContent !== desiredCompleted) txt.textContent = desiredCompleted;
+      const pctTxt = box.querySelector('.ndx-yt-pct-text');
+      if (pctTxt && pctTxt.textContent !== (progressPct + '%')) pctTxt.textContent = progressPct + '%';
     }
   });
   // Watch variant box
