@@ -201,13 +201,9 @@ function renderFbBlacklist(list){
     link.style.textDecoration = 'none';
     link.style.color = '#1877f2';
     const removeBtn = document.createElement('button');
+    removeBtn.className = 'remove-btn';
     removeBtn.textContent = '✕';
     removeBtn.title = 'Remove from blacklist';
-    removeBtn.style.border = 'none';
-    removeBtn.style.background = '#eee';
-    removeBtn.style.cursor = 'pointer';
-    removeBtn.style.padding = '0 6px';
-    removeBtn.style.borderRadius = '3px';
     removeBtn.addEventListener('click', () => {
       chrome.storage.local.get(['fbBlacklist'], data => {
         const newList = (data.fbBlacklist || []).filter(e => e.href !== entry.href);
@@ -340,13 +336,9 @@ function internalRender(list){
       meta.textContent = `${done}/${total}`;
     }
     const removeBtn = document.createElement('button');
+    removeBtn.className = 'remove-btn';
     removeBtn.textContent = '✕';
     removeBtn.title = 'Remove playlist';
-    removeBtn.style.border = 'none';
-    removeBtn.style.background = '#eee';
-    removeBtn.style.cursor = 'pointer';
-    removeBtn.style.padding = '0 6px';
-    removeBtn.style.borderRadius = '3px';
     removeBtn.addEventListener('click', () => {
       chrome.storage.local.get(['ytPlaylists'], data => {
         const current = Array.isArray(data.ytPlaylists) ? data.ytPlaylists : [];
@@ -396,5 +388,39 @@ chrome.storage.onChanged.addListener((changes, area) => {
   if(changes.ytCourseMode){
     chrome.storage.local.get(['ytPlaylists'], data => renderYtPlaylists(data.ytPlaylists || []));
     broadcastContentRefresh();
+  }
+});
+
+// === YouTube Feed Redirect option ===
+const ytRedirectSelect = document.getElementById('ytFeedRedirect');
+const ytRedirectWrap = document.getElementById('ytFeedRedirectWrap');
+const hideYTRecsEl = document.getElementById('hideYTRecs');
+
+function updateYTRedirectVisibility() {
+  if (ytRedirectWrap && hideYTRecsEl) {
+    ytRedirectWrap.style.display = hideYTRecsEl.checked ? 'flex' : 'none';
+  }
+}
+
+if (ytRedirectSelect) {
+  chrome.storage.sync.get(['ytFeedRedirect'], data => {
+    ytRedirectSelect.value = data.ytFeedRedirect || 'none';
+  });
+  ytRedirectSelect.addEventListener('change', () => {
+    chrome.storage.sync.set({ ytFeedRedirect: ytRedirectSelect.value }, broadcastContentRefresh);
+  });
+}
+
+if (hideYTRecsEl) {
+  hideYTRecsEl.addEventListener('change', updateYTRedirectVisibility);
+  chrome.storage.sync.get(['hideYTRecs'], data => {
+    // Initial run
+    updateYTRedirectVisibility();
+  });
+}
+
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === 'sync' && changes.hideYTRecs) {
+    updateYTRedirectVisibility();
   }
 });

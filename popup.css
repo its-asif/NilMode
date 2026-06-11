@@ -281,7 +281,8 @@ label.settings-row {
 
 /* ── Text & number inputs ──────────────────────── */
 input[type="number"],
-input[type="text"] {
+input[type="text"],
+select {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -293,6 +294,32 @@ input[type="text"] {
   transition: border-color .15s;
 }
 input[type="number"]:focus,
-input[type="text"]:focus { border-color: var(--accent); }
+input[type="text"]:focus,
+select:focus { border-color: var(--accent); }
 input[type="number"] { width: 52px; }
 #pauseReasonInput { width: 100%; display: block; }
+select {
+  cursor: pointer;
+  padding-right: 20px;
+}
+
+/* ── Modern List Remove Button ───────────────── */
+.remove-btn {
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: var(--muted) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius) !important;
+  cursor: pointer !important;
+  padding: 2px 6px !important;
+  font-size: 11px !important;
+  line-height: 1.2 !important;
+  transition: all 0.15s ease !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+.remove-btn:hover {
+  background: rgba(239, 68, 68, 0.15) !important;
+  border-color: rgba(239, 68, 68, 0.4) !important;
+  color: #fca5a5 !important;
+}

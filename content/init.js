@@ -34,6 +34,7 @@ function runContentFilters() {
     'hideYTRecs', 'hideYTShorts', 'hideYTComments', 'hideYTNext',
     'pauseToggle', 'pauseUntil', 'pauseReason',
     'productiveFacebook',
+    'ytFeedRedirect',
     // include legacy copies for migration/fallback
     'fbBlacklist', 'ytPlaylists',
     'ytCourseMode'
@@ -95,6 +96,15 @@ function runContentFilters() {
       // youtube
       if (url.includes('youtube.com')) {
         const isHome = (/^https?:\/\/(www\.)?youtube\.com\/?(\?|$)/).test(url);
+        if (isHome && data.hideYTRecs) {
+          if (data.ytFeedRedirect === 'subscriptions') {
+            location.replace('https://www.youtube.com/feed/subscriptions');
+            return;
+          } else if (data.ytFeedRedirect === 'watchlater') {
+            location.replace('https://www.youtube.com/playlist?list=WL');
+            return;
+          }
+        }
         if (isHome) applyVisibility('ytd-browse.style-scope.ytd-page-manager', !!data.hideYTRecs); else applyVisibility('ytd-browse.style-scope.ytd-page-manager', false);
         applyVisibility('ytd-rich-section-renderer.style-scope.ytd-rich-grid-renderer', !!data.hideYTShorts);
         if (url.includes('watch')) {
@@ -124,7 +134,7 @@ const observer = new MutationObserver(() => {
 observer.observe(document.body, { childList: true, subtree: true });
 chrome.storage.onChanged.addListener((changes, area) => {
   if (!ndxCtxOk()) return;
-  const relevantSync = ['hideFacebookFeed', 'hideFacebookStories', 'hideRightSidebar', 'hideYTRecs', 'hideYTShorts', 'hideYTComments', 'hideYTNext', 'pauseToggle', 'pauseUntil', 'pauseReason', 'productiveFacebook', 'ytCourseMode'];
+  const relevantSync = ['hideFacebookFeed', 'hideFacebookStories', 'hideRightSidebar', 'hideYTRecs', 'hideYTShorts', 'hideYTComments', 'hideYTNext', 'pauseToggle', 'pauseUntil', 'pauseReason', 'productiveFacebook', 'ytCourseMode', 'ytFeedRedirect'];
   const relevantLocal = ['fbBlacklist', 'ytPlaylists'];
   const keys = Object.keys(changes);
   const shouldRun = (area === 'sync' && keys.some(k => relevantSync.includes(k))) ||
