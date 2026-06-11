@@ -10,7 +10,7 @@ function saveYouTubePlaylist(id, source){
     if (watchTitleAnchor && watchTitleAnchor.textContent.trim()) title = watchTitleAnchor.textContent.trim();
   }
   if (!title) title = id;
-  chrome.storage.sync.get(['ytPlaylists'], data => {
+  chrome.storage.local.get(['ytPlaylists'], data => {
     const list = Array.isArray(data.ytPlaylists) ? data.ytPlaylists : [];
     if (list.some(p => p.id === id)) return;
   let videoCount = null; let totalDurationSeconds = null; let videoDurations = null;
@@ -25,11 +25,12 @@ function saveYouTubePlaylist(id, source){
     } catch(_){ }
     const entry = { id, title, url: canonicalUrl, addedAt: Date.now(), source, videoCount, totalDurationSeconds, videoDurations };
     const estimatedSize = JSON.stringify([...list, entry]).length;
-    if (estimatedSize > 9000) { alert('Playlist storage near limit. Consider pruning.'); return; }
+    if (estimatedSize > 400000) { alert('Playlist storage near limit. Consider pruning.'); return; }
     list.push(entry);
-    chrome.storage.sync.set({ ytPlaylists: list }, () => {
+    chrome.storage.local.set({ ytPlaylists: list }, () => {
       if (source === 'pure') {
-        const container = document.querySelector('#page-manager > ytd-browse > yt-page-header-renderer > yt-page-header-view-model > div.yt-page-header-view-model__scroll-container > div');
+        const container = document.querySelector('#page-manager > ytd-browse > yt-page-header-renderer > yt-page-header-view-model > div.yt-page-header-view-model__scroll-container > div')
+          || document.querySelector('#page-manager > ytd-browse > ytd-playlist-header-renderer > div > div.immersive-header-content.style-scope.ytd-playlist-header-renderer > div.thumbnail-and-metadata-wrapper.style-scope.ytd-playlist-header-renderer');
         if (container) {
           const btn = container.querySelector('.ndx-yt-course-btn-pure');
           if (btn) btn.remove();

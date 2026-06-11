@@ -1,36 +1,298 @@
-body {
-  font-family: Arial, sans-serif;
-  min-width: 250px;
-  padding: 10px;
+:root {
+  --bg:           #0f172a;
+  --surface:      #1e293b;
+  --border:       #334155;
+  --accent:       #3b82f6;
+  --accent-dim:   #2563eb;
+  --text:         #f1f5f9;
+  --muted:        #94a3b8;
+  --danger:       #f87171;
+  --danger-on:    #ef4444;
+  --warn:         #fbbf24;
+  --toggle-off:   #374151;
+  --radius:       6px;
+  --font: system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
 }
 
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font);
+  font-size: 13px;
+  background: var(--bg);
+  color: var(--text);
+  min-width: 272px;
+}
+
+/* ── Pause Status Strip ────────────────────────── */
+#pause-strip {
+  display: none; /* shown via JS */
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: linear-gradient(90deg, rgba(251,191,36,.14), rgba(251,191,36,.05));
+  border-bottom: 1px solid rgba(251,191,36,.22);
+  font-size: 11.5px;
+  color: var(--warn);
+  animation: ndx-strip-in .2s ease;
+}
+#pause-strip.active { display: flex; }
+.pause-strip-icon { font-size: 13px; flex-shrink: 0; }
+#pause-strip-text { flex: 1; font-weight: 500; }
+#pause-strip-resume {
+  background: rgba(251,191,36,.15);
+  border: 1px solid rgba(251,191,36,.35);
+  color: var(--warn);
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 11px;
+  cursor: pointer;
+  font-family: var(--font);
+  transition: background .15s;
+  flex-shrink: 0;
+}
+#pause-strip-resume:hover { background: rgba(251,191,36,.28); }
+
+@keyframes ndx-strip-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Tabs ─────────────────────────────────────── */
 .tabs {
   display: flex;
-  margin-bottom: 10px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
 }
 
 .tab-btn {
   flex: 1;
-  padding: 5px;
+  padding: 9px 4px;
   cursor: pointer;
   border: none;
-  background: #eee;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  font-family: var(--font);
+  font-weight: 500;
+  letter-spacing: .3px;
+  position: relative;
+  transition: color .15s, background .15s;
 }
-
-.tab-btn.active {
-  background: #007bff;
-  color: #fff;
+.tab-btn:hover { color: var(--text); background: rgba(255,255,255,.04); }
+.tab-btn.active { color: #60a5fa; }
+.tab-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px; left: 15%; right: 15%;
+  height: 2px;
+  background: var(--accent);
+  border-radius: 2px 2px 0 0;
 }
+/* Settings tab paused state */
+.tab-btn.tab-paused { color: var(--warn) !important; }
+.tab-btn.tab-paused::after { background: var(--warn); }
 
+/* ── Tab Content + Smooth Animation ───────────── */
 .tab-content {
+  display: none;
+  padding: 8px 12px 12px;
+}
+.tab-content.active {
+  display: block;
+  animation: ndx-tab-in .18s ease forwards;
+}
+@keyframes ndx-tab-in {
+  from { opacity: 0; transform: translateY(5px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Labels with right-side toggle ────────────── */
+label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 0;
+  cursor: pointer;
+  color: var(--text);
+  font-size: 13px;
+  user-select: none;
+  transition: color .12s;
+}
+label:hover { color: #fff; }
+
+/* ── Toggle switch ─────────────────────────────── */
+input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  flex-shrink: 0;
+  width: 36px;
+  height: 20px;
+  border-radius: 10px;
+  background: var(--toggle-off);
+  cursor: pointer;
+  margin-left: 12px;
+  transition: background .22s ease;
+}
+/* Sliding thumb */
+input[type="checkbox"]::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,.35);
+  transition: transform .22s cubic-bezier(.4,0,.2,1);
+}
+input[type="checkbox"]:checked { background: var(--accent); }
+input[type="checkbox"]:checked::after { transform: translateX(16px); }
+input[type="checkbox"]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ── Danger toggle (Block) ─────────────────────── */
+input[type="checkbox"].toggle-danger:checked {
+  background: var(--danger-on);
+  box-shadow: 0 0 0 3px rgba(239,68,68,.18);
+}
+label:has(input.toggle-danger:checked) {
+  color: #fca5a5; /* subtle red tint on the label text */
+}
+
+/* ── Section Headers ───────────────────────────── */
+h4 {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .7px;
+  color: var(--muted);
+  margin: 10px 0 4px;
+}
+
+hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 6px 0 8px;
+}
+
+/* ── Lists ─────────────────────────────────────── */
+ul {
+  list-style: none;
+  padding: 0;
+  margin: 2px 0 4px;
+  max-height: 140px;
+  overflow-y: auto;
+}
+ul::-webkit-scrollbar { width: 4px; }
+ul::-webkit-scrollbar-track { background: transparent; }
+ul::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+li {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 0;
+}
+li a {
+  flex: 1;
+  font-size: 12px;
+  text-decoration: none;
+  color: #60a5fa;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+li a:hover { text-decoration: underline; }
+
+/* ── Buttons ───────────────────────────────────── */
+button {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 3px 9px;
+  font-size: 12px;
+  font-family: var(--font);
+  cursor: pointer;
+  transition: background .15s, border-color .15s;
+}
+button:hover { background: #293548; border-color: #475569; }
+
+li button {
+  flex-shrink: 0;
+  padding: 1px 6px;
+  font-size: 11px;
+  color: var(--muted);
+}
+li button:hover { color: var(--danger); border-color: var(--danger); }
+
+#fbBlacklistClear,
+#ytPlaylistsClear {
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--danger);
+  border-color: var(--danger);
+}
+#fbBlacklistClear:hover,
+#ytPlaylistsClear:hover { background: rgba(248,113,113,.1); }
+
+/* ── Empty hint text ───────────────────────────── */
+.empty-hint {
+  font-size: 11.5px;
+  color: var(--muted);
+  padding: 2px 0;
   display: none;
 }
 
-.tab-content.active {
+/* ── Completed playlists toggle ────────────────── */
+#ytCompletedWrap  { margin-top: 8px; display: none; }
+#ytCompletedToggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+}
+#ytCompletedToggle h4 { margin: 0; }
+#ytCompletedChevron { font-size: 11px; opacity: .6; }
+
+/* ── Settings Tab ──────────────────────────────── */
+#pauseReasonWrap {
+  padding: 2px 0 6px 2px;
+}
+.settings-sublabel {
   display: block;
+  font-size: 10.5px;
+  color: var(--muted);
+  margin-bottom: 3px;
+  letter-spacing: .2px;
+}
+label.settings-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-start;
 }
 
-label {
-  display: block;
-  /* margin: 6px 0; */
+/* ── Text & number inputs ──────────────────────── */
+input[type="number"],
+input[type="text"] {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: 12px;
+  font-family: var(--font);
+  padding: 4px 7px;
+  outline: none;
+  transition: border-color .15s;
 }
+input[type="number"]:focus,
+input[type="text"]:focus { border-color: var(--accent); }
+input[type="number"] { width: 52px; }
+#pauseReasonInput { width: 100%; display: block; }

@@ -1,23 +1,24 @@
 // progress.js - Track per-video completion within a playlist (pure & watch variants)
 // Data model extension: each playlist entry in ytPlaylists may now have completedIds: string[]
 
-function ndxGetPlaylistIdFromUrl(){
+function ndxGetPlaylistIdFromUrl() {
   const params = new URLSearchParams(location.search);
   return params.get('list');
 }
 
-function ndxComputeAndStoreProgress(playlistId, videoId, checked){
-  if(!playlistId || !videoId) return;
-  chrome.storage.sync.get(['ytPlaylists'], data => {
+function ndxComputeAndStoreProgress(playlistId, videoId, checked) {
+  if (!playlistId || !videoId) return;
+  if (!ndxIsContextValid()) return; // extension reloaded - DOM event still alive but context is dead
+  chrome.storage.local.get(['ytPlaylists'], data => {
     const arr = Array.isArray(data.ytPlaylists) ? data.ytPlaylists : [];
-    const idx = arr.findIndex(p=>p.id===playlistId);
-    if(idx<0) return;
+    const idx = arr.findIndex(p => p.id === playlistId);
+    if (idx < 0) return;
     const entry = arr[idx];
-    if(!Array.isArray(entry.completedIds)) entry.completedIds = [];
-    if(checked){
-      if(!entry.completedIds.includes(videoId)) entry.completedIds.push(videoId);
+    if (!Array.isArray(entry.completedIds)) entry.completedIds = [];
+    if (checked) {
+      if (!entry.completedIds.includes(videoId)) entry.completedIds.push(videoId);
     } else {
-      entry.completedIds = entry.completedIds.filter(id=>id!==videoId);
+      entry.completedIds = entry.completedIds.filter(id => id !== videoId);
     }
     const total = entry.videoCount || 0;
     const done = entry.completedIds.length;
@@ -25,64 +26,64 @@ function ndxComputeAndStoreProgress(playlistId, videoId, checked){
     let completedSeconds = 0;
     if (entry.videoDurations && typeof entry.videoDurations === 'object') {
       entry.completedIds.forEach(id => { if (entry.videoDurations[id]) completedSeconds += entry.videoDurations[id]; });
-    } else if (entry.totalDurationSeconds && total>0) {
+    } else if (entry.totalDurationSeconds && total > 0) {
       // fallback average distribution
       const avg = entry.totalDurationSeconds / total;
       completedSeconds = Math.round(avg * done);
     }
     entry.completedSeconds = completedSeconds;
-    entry.progressPct = total > 0 ? Math.min(100, Math.round(done/total*100)) : 0;
+    entry.progressPct = total > 0 ? Math.min(100, Math.round(done / total * 100)) : 0;
     arr[idx] = entry;
-    chrome.storage.sync.set({ ytPlaylists: arr }, () => {
+    chrome.storage.local.set({ ytPlaylists: arr }, () => {
       ndxRefreshProgressBars(entry);
     });
   });
 }
 
-function ndxRefreshProgressBars(entry){
-  if(!entry) return;
-  const { id: playlistId, progressPct=0, videoCount=0, completedIds=[], completedSeconds=0, totalDurationSeconds=0 } = entry;
+function ndxRefreshProgressBars(entry) {
+  if (!entry) return;
+  const { id: playlistId, progressPct = 0, videoCount = 0, completedIds = [], completedSeconds = 0, totalDurationSeconds = 0 } = entry;
   const done = completedIds.length;
   const leftSeconds = totalDurationSeconds ? Math.max(0, totalDurationSeconds - completedSeconds) : 0;
   // Pure playlist box
   document.querySelectorAll('.ndx-yt-course-box').forEach(box => {
-    if(box.dataset.playlistId === playlistId){
+    if (box.dataset.playlistId === playlistId) {
       const bar = box.querySelector('.ndx-yt-progress-bar');
-      if(bar && bar.style.width !== (progressPct + '%')) bar.style.width = progressPct + '%';
+      if (bar && bar.style.width !== (progressPct + '%')) bar.style.width = progressPct + '%';
       const txt = box.querySelector('.ndx-yt-completed-text');
       const desiredCompleted = `${done}/${videoCount} Completed`;
-      if(txt && txt.textContent !== desiredCompleted) txt.textContent = desiredCompleted;
+      if (txt && txt.textContent !== desiredCompleted) txt.textContent = desiredCompleted;
     }
   });
   // Watch variant box
   document.querySelectorAll('.ndx-yt-course-box-watch').forEach(box => {
-    if(box.dataset.playlistId === playlistId){
-      const bar = box.querySelector('.ndx-yt-progress-bar'); if(bar && bar.style.width !== (progressPct + '%')) bar.style.width = progressPct + '%';
+    if (box.dataset.playlistId === playlistId) {
+      const bar = box.querySelector('.ndx-yt-progress-bar'); if (bar && bar.style.width !== (progressPct + '%')) bar.style.width = progressPct + '%';
       const timeDoneEl = box.querySelector('.ndx-yt-progress-time-done');
       const timeTotalEl = box.querySelector('.ndx-yt-progress-time-total');
       const vidsEl = box.querySelector('.ndx-yt-progress-videos');
       const summaryEl = box.querySelector('.ndx-yt-progress-summary');
       const desiredDone = formatDuration(completedSeconds);
-      if(timeDoneEl && timeDoneEl.textContent !== desiredDone) timeDoneEl.textContent = desiredDone;
+      if (timeDoneEl && timeDoneEl.textContent !== desiredDone) timeDoneEl.textContent = desiredDone;
       const desiredTotal = totalDurationSeconds ? formatDuration(totalDurationSeconds) : '…';
-      if(timeTotalEl && timeTotalEl.textContent !== desiredTotal) timeTotalEl.textContent = desiredTotal;
+      if (timeTotalEl && timeTotalEl.textContent !== desiredTotal) timeTotalEl.textContent = desiredTotal;
       const desiredVids = `${done}/${videoCount} watched`;
-      if(vidsEl && vidsEl.textContent !== desiredVids) vidsEl.textContent = desiredVids;
-      const desiredSummary = `${progressPct}% completed • ${leftSeconds? formatDuration(leftSeconds): '0s'} left`;
-      if(summaryEl && summaryEl.textContent !== desiredSummary) summaryEl.textContent = desiredSummary;
+      if (vidsEl && vidsEl.textContent !== desiredVids) vidsEl.textContent = desiredVids;
+      const desiredSummary = `${progressPct}% completed • ${leftSeconds ? formatDuration(leftSeconds) : '0s'} left`;
+      if (summaryEl && summaryEl.textContent !== desiredSummary) summaryEl.textContent = desiredSummary;
     }
   });
 }
 
-function ndxInjectCompletionCheckboxes(existingList){
+function ndxInjectCompletionCheckboxes(existingList) {
   const playlistId = ndxGetPlaylistIdFromUrl();
-  if(!playlistId) return;
+  if (!playlistId) return;
   // Only inject if this playlist is actually saved in ytPlaylists.
-  const entry = Array.isArray(existingList)? existingList.find(p=>p.id===playlistId): null;
-  if(!entry){
+  const entry = Array.isArray(existingList) ? existingList.find(p => p.id === playlistId) : null;
+  if (!entry) {
     // If previously injected (user deleted playlist), remove checkboxes & styling.
-    document.querySelectorAll('.ndx-course-check-host').forEach(h=>h.remove());
-    document.querySelectorAll('.ndx-course-menu-aug').forEach(m=>{
+    document.querySelectorAll('.ndx-course-check-host').forEach(h => h.remove());
+    document.querySelectorAll('.ndx-course-menu-aug').forEach(m => {
       m.classList.remove('ndx-course-menu-aug');
       m.style.removeProperty('display');
       m.style.removeProperty('justify-content');
@@ -99,7 +100,7 @@ function ndxInjectCompletionCheckboxes(existingList){
   let injectedAny = false;
   menus.forEach(menu => {
     // Ensure menu container has our flex styling
-    if(!menu.classList.contains('ndx-course-menu-aug')){
+    if (!menu.classList.contains('ndx-course-menu-aug')) {
       menu.classList.add('ndx-course-menu-aug');
       menu.style.display = 'flex';
       menu.style.justifyContent = 'center';
@@ -108,7 +109,7 @@ function ndxInjectCompletionCheckboxes(existingList){
     }
 
     // If checkbox host is missing (e.g., panel re-rendered and children were replaced), re-insert
-    if(!menu.querySelector('.ndx-course-check-host')){
+    if (!menu.querySelector('.ndx-course-check-host')) {
       injectedAny = true;
       const host = document.createElement('div');
       host.className = 'ndx-course-check-host';
@@ -120,20 +121,20 @@ function ndxInjectCompletionCheckboxes(existingList){
       let videoId = '';
       try {
         const parentRenderer = menu.closest('ytd-playlist-video-renderer, ytd-playlist-panel-video-renderer');
-        if(parentRenderer){
+        if (parentRenderer) {
           // Try standard thumbnail anchor first
           let a = parentRenderer.querySelector('a#thumbnail');
-          if(!a) {
+          if (!a) {
             // Fallback: any anchor with a watch URL
-              a = Array.from(parentRenderer.querySelectorAll('a')).find(el => el.href && el.href.includes('watch?v='));
+            a = Array.from(parentRenderer.querySelectorAll('a')).find(el => el.href && el.href.includes('watch?v='));
           }
-          if(a && a.href){
+          if (a && a.href) {
             const pu = new URL(a.href);
             videoId = pu.searchParams.get('v') || '';
           }
         }
-      } catch(_){ }
-      if(videoId && completed.has(videoId)) cb.checked = true;
+      } catch (_) { }
+      if (videoId && completed.has(videoId)) cb.checked = true;
       cb.addEventListener('change', () => ndxComputeAndStoreProgress(playlistId, videoId, cb.checked));
 
       host.appendChild(cb);
@@ -142,41 +143,68 @@ function ndxInjectCompletionCheckboxes(existingList){
   });
 
   // After all checkboxes, update progress bars once
-  if(entry && typeof entry.progressPct === 'number' && injectedAny){
+  if (entry && typeof entry.progressPct === 'number' && injectedAny) {
     ndxRefreshProgressBars(entry);
   }
+}
+
+// ----- Context validity guard -----
+// chrome.runtime.id becomes undefined once the extension is reloaded/updated.
+// All chrome API calls inside timers must check this first to avoid the
+// "Extension context invalidated" uncaught error.
+function ndxIsContextValid() {
+  try { return !!chrome.runtime?.id; } catch (_) { return false; }
 }
 
 // ----- Resilient maintenance: periodic + re-render detection (type-2 watch panel) -----
 let ndxCheckboxIntervalId = null;
 let ndxInjectDebounce = null;
-function ndxScheduleInject(delay = 120){
-  if(ndxInjectDebounce) return;
+function ndxScheduleInject(delay = 120) {
+  if (ndxInjectDebounce) return;
   ndxInjectDebounce = setTimeout(() => {
     ndxInjectDebounce = null;
-    chrome.storage.sync.get(['ytPlaylists'], data => ndxInjectCompletionCheckboxes(data.ytPlaylists));
+    if (!ndxIsContextValid()) return; // extension was reloaded - stop silently
+    try {
+      chrome.storage.local.get(['ytPlaylists'], data => ndxInjectCompletionCheckboxes(data.ytPlaylists));
+    } catch (_) { }
   }, delay);
 }
 
-function ndxStartCheckboxMaintenance(){
-  if(!ndxCheckboxIntervalId){
+function ndxStartCheckboxMaintenance() {
+  if (!ndxCheckboxIntervalId) {
     ndxCheckboxIntervalId = setInterval(() => {
-      // Every second, ensure checkboxes exist (covers silent DOM swaps)
-      chrome.storage.sync.get(['ytPlaylists'], data => ndxInjectCompletionCheckboxes(data.ytPlaylists));
-    }, 1000);
+      // Kill the interval if the extension context is gone (e.g. after reload)
+      if (!ndxIsContextValid()) {
+        clearInterval(ndxCheckboxIntervalId);
+        ndxCheckboxIntervalId = null;
+        return;
+      }
+      // Skip if not on a playlist page - eliminates unnecessary storage reads
+      if (!ndxGetPlaylistIdFromUrl()) return;
+      try {
+        chrome.storage.local.get(['ytPlaylists'], data => ndxInjectCompletionCheckboxes(data.ytPlaylists));
+      } catch (_) {
+        clearInterval(ndxCheckboxIntervalId);
+        ndxCheckboxIntervalId = null;
+      }
+    }, 2500);
   }
   // Observe the watch playlist panel (type-2) for re-renders
   const tryObserve = () => {
     const panel = document.querySelector('ytd-playlist-panel-renderer');
-    if(panel && !panel.dataset.ndxObserved){
+    if (panel && !panel.dataset.ndxObserved) {
       panel.dataset.ndxObserved = '1';
-      const obs = new MutationObserver(() => ndxScheduleInject(100));
+      const obs = new MutationObserver(() => {
+        if (!ndxIsContextValid()) { obs.disconnect(); return; }
+        ndxScheduleInject(100);
+      });
       obs.observe(panel, { childList: true, subtree: true });
     }
   };
   tryObserve();
   // Also hook YouTube SPA navigation events to re-try observing
   window.addEventListener('yt-navigate-finish', () => {
+    if (!ndxIsContextValid()) return;
     setTimeout(() => { tryObserve(); ndxScheduleInject(50); }, 50);
   });
 }

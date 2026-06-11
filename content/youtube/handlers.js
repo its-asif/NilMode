@@ -6,13 +6,13 @@ function attachPlaylistBoxHandlers(box, playlistId){
     updateBtn.addEventListener('click', () => {
       const stats = extractPlaylistStatsFromDom();
       if (!stats) { alert('Could not extract stats. Scroll playlist into view?'); return; }
-      chrome.storage.sync.get(['ytPlaylists'], data => {
+      chrome.storage.local.get(['ytPlaylists'], data => {
         const arr = Array.isArray(data.ytPlaylists)? data.ytPlaylists: [];
         const idx = arr.findIndex(p=>p.id===playlistId);
         if (idx>=0){
           arr[idx].videoCount = stats.videoCount;
             arr[idx].totalDurationSeconds = stats.totalDurationSeconds;
-            chrome.storage.sync.set({ ytPlaylists: arr }, () => {
+            chrome.storage.local.set({ ytPlaylists: arr }, () => {
               const countEl = box.querySelector('.ndx-yt-count');
               const durEl = box.querySelector('.ndx-yt-duration');
               if (countEl) countEl.textContent = stats.videoCount;
@@ -25,12 +25,13 @@ function attachPlaylistBoxHandlers(box, playlistId){
   if (deleteBtn) {
     deleteBtn.addEventListener('click', () => {
       if (!confirm('Delete this saved playlist?')) return;
-      chrome.storage.sync.get(['ytPlaylists'], data => {
+      chrome.storage.local.get(['ytPlaylists'], data => {
         const arr = Array.isArray(data.ytPlaylists)? data.ytPlaylists: [];
         const next = arr.filter(p=>p.id!==playlistId);
-        chrome.storage.sync.set({ ytPlaylists: next }, () => {
+        chrome.storage.local.set({ ytPlaylists: next }, () => {
           box.remove();
-          const container = document.querySelector('#page-manager > ytd-browse > yt-page-header-renderer > yt-page-header-view-model > div.yt-page-header-view-model__scroll-container > div');
+          const container = document.querySelector('#page-manager > ytd-browse > yt-page-header-renderer > yt-page-header-view-model > div.yt-page-header-view-model__scroll-container > div')
+            || document.querySelector('#page-manager > ytd-browse > ytd-playlist-header-renderer > div > div.immersive-header-content.style-scope.ytd-playlist-header-renderer > div.thumbnail-and-metadata-wrapper.style-scope.ytd-playlist-header-renderer');
           if (container && !container.querySelector('.ndx-yt-course-btn-pure')) {
             const a = document.createElement('a');
             a.textContent = 'Start Course';
@@ -59,13 +60,13 @@ function attachWatchPlaylistBoxHandlers(box, playlistId){
     updateBtn.addEventListener('click', () => {
       const stats = extractWatchPlaylistStatsFromDom();
       if (!stats) { alert('Could not extract stats. Scroll playlist?'); return; }
-      chrome.storage.sync.get(['ytPlaylists'], data => {
+      chrome.storage.local.get(['ytPlaylists'], data => {
         const arr = Array.isArray(data.ytPlaylists)? data.ytPlaylists: [];
         const idx = arr.findIndex(p=>p.id===playlistId);
         if (idx>=0){
           arr[idx].videoCount = stats.videoCount;
           arr[idx].totalDurationSeconds = stats.totalDurationSeconds;
-          chrome.storage.sync.set({ ytPlaylists: arr }, () => {
+          chrome.storage.local.set({ ytPlaylists: arr }, () => {
             const countEl = box.querySelector('.ndx-yt-count');
             const durEl = box.querySelector('.ndx-yt-duration');
             if (countEl) countEl.textContent = stats.videoCount;
@@ -78,10 +79,10 @@ function attachWatchPlaylistBoxHandlers(box, playlistId){
   if (deleteBtn) {
     deleteBtn.addEventListener('click', () => {
       if (!confirm('Delete this saved playlist?')) return;
-      chrome.storage.sync.get(['ytPlaylists'], data => {
+      chrome.storage.local.get(['ytPlaylists'], data => {
         const arr = Array.isArray(data.ytPlaylists)? data.ytPlaylists: [];
         const next = arr.filter(p=>p.id!==playlistId);
-        chrome.storage.sync.set({ ytPlaylists: next }, () => {
+        chrome.storage.local.set({ ytPlaylists: next }, () => {
           box.remove();
           const h3 = document.querySelector('#header-description > h3:nth-child(1)');
           if (h3 && !h3.querySelector('.ndx-yt-course-btn-watch')) {

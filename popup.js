@@ -40,6 +40,37 @@ const toggles = [
   "productiveFacebook"
 ];
 
+function broadcastContentRefresh(){
+  try {
+    chrome.tabs.query({ url: ['*://*.facebook.com/*','*://*.youtube.com/*'] }, tabs => {
+      tabs.forEach(tab => {
+        try { chrome.tabs.sendMessage(tab.id, { type: 'ndx-refresh' }); } catch(_){ }
+      });
+    });
+  } catch(_){ }
+}
+
+// One-time migration: move larger data blobs off sync storage to local
+function migrateLargeListsToLocal(){
+  chrome.storage.local.get(['fbBlacklist','ytPlaylists'], localData => {
+    chrome.storage.sync.get(['fbBlacklist','ytPlaylists'], syncData => {
+      const toLocal = {};
+      const toRemove = [];
+      if (typeof localData.fbBlacklist === 'undefined' && Array.isArray(syncData.fbBlacklist)) {
+        toLocal.fbBlacklist = syncData.fbBlacklist;
+        if (syncData.fbBlacklist.length) toRemove.push('fbBlacklist');
+      }
+      if (typeof localData.ytPlaylists === 'undefined' && Array.isArray(syncData.ytPlaylists)) {
+        toLocal.ytPlaylists = syncData.ytPlaylists;
+        if (syncData.ytPlaylists.length) toRemove.push('ytPlaylists');
+      }
+      if (Object.keys(toLocal).length) chrome.storage.local.set(toLocal);
+      if (toRemove.length) chrome.storage.sync.remove(toRemove);
+    });
+  });
+}
+migrateLargeListsToLocal();
+
 toggles.forEach(id => {
   const el = document.getElementById(id);
   if(!el) return;
@@ -56,9 +87,10 @@ toggles.forEach(id => {
       if(el.checked){
         chrome.storage.sync.get(['pauseMinutes'], d => {
           const minutes = d.pauseMinutes || 5;
-          const reason = (prompt('Why are you pausing?', '') || '').trim();
+          const reasonInput = document.getElementById('pauseReasonInput');
+          const reason = (reasonInput ? reasonInput.value.trim() : '') || 'Reminder';
           const pauseUntil = Date.now() + minutes*60*1000;
-          chrome.storage.sync.set({ pauseToggle:true, pauseUntil, pauseReason: reason || 'Reminder' });
+          chrome.storage.sync.set({ pauseToggle:true, pauseUntil, pauseReason: reason });
         });
         return; // early exit; handled async
       } else {
@@ -67,35 +99,67 @@ toggles.forEach(id => {
       }
     }
     chrome.storage.sync.set(update);
+    broadcastContentRefresh();
   });
 });
 
-// Reflect pause state text (optional UX improvement)
-const pauseToggleEl = document.getElementById('pauseToggle');
-function syncPauseLabel(){
-  if(!pauseToggleEl) return;
-  const label = pauseToggleEl.closest('label');
-  chrome.storage.sync.get(['pauseToggle','pauseReason','pauseUntil'], data => {
-    if(!label) return;
-    if(data.pauseToggle && data.pauseUntil && Date.now() < data.pauseUntil){
-      label.dataset.originalText = label.dataset.originalText || label.textContent;
-      const remMs = data.pauseUntil - Date.now();
-      const minsLeft = Math.max(0, Math.floor(remMs/60000));
-      label.textContent = `Pause (\u2713 Running${data.pauseReason? ': '+ data.pauseReason: ''}${minsLeft? ' ~'+minsLeft+'m':''})`;
-    } else if(label.dataset.originalText){
-      label.textContent = label.dataset.originalText;
+// === Pause UX: strip + settings tab indicator ===
+const pauseStrip      = document.getElementById('pause-strip');
+const pauseStripText  = document.getElementById('pause-strip-text');
+const pauseStripBtn   = document.getElementById('pause-strip-resume');
+const settingsTabBtn  = document.querySelector('.tab-btn[data-tab="settings"]');
+const pauseToggleEl   = document.getElementById('pauseToggle');
+
+function fmtMs(ms) {
+  if (ms <= 0) return '0s';
+  const m = Math.floor(ms / 60000);
+  const s = Math.floor((ms % 60000) / 1000);
+  return m > 0 ? `${m}m ${s}s` : `${s}s`;
+}
+
+function updatePauseUX() {
+  chrome.storage.sync.get(['pauseToggle', 'pauseUntil', 'pauseReason'], data => {
+    const now = Date.now();
+    const active = data.pauseToggle && data.pauseUntil && now < data.pauseUntil;
+    // Strip
+    if (active) {
+      const rem = data.pauseUntil - now;
+      const reason = data.pauseReason && data.pauseReason !== 'Reminder' ? data.pauseReason + ' · ' : '';
+      pauseStripText.textContent = `${reason}${fmtMs(rem)} left`;
+      pauseStrip.classList.add('active');
+    } else {
+      pauseStrip.classList.remove('active');
     }
+    // Settings tab label
+    if (settingsTabBtn) {
+      if (active) {
+        settingsTabBtn.textContent = '⏸ Settings';
+        settingsTabBtn.classList.add('tab-paused');
+      } else {
+        settingsTabBtn.textContent = 'Settings';
+        settingsTabBtn.classList.remove('tab-paused');
+      }
+    }
+    // Keep pauseToggle checkbox in sync
+    if (pauseToggleEl) pauseToggleEl.checked = !!data.pauseToggle;
   });
 }
-if(pauseToggleEl){
-  syncPauseLabel();
-  setInterval(syncPauseLabel, 30000); // update every 30s (lightweight)
+
+updatePauseUX();
+setInterval(updatePauseUX, 1000);
+
+if (pauseStripBtn) {
+  pauseStripBtn.addEventListener('click', () => {
+    chrome.storage.sync.set({ pauseToggle: false, pauseUntil: null, pauseReason: null });
+  });
 }
-chrome.storage.onChanged.addListener((changes, area)=>{
-  if(area==='sync' && (changes.pauseToggle || changes.pauseReason || changes.pauseUntil)){
-    syncPauseLabel();
+
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === 'sync' && (changes.pauseToggle || changes.pauseReason || changes.pauseUntil)) {
+    updatePauseUX();
   }
 });
+
 
 // === Pause Minutes ===
 const pauseInput = document.getElementById("pauseMinutes");
@@ -145,9 +209,9 @@ function renderFbBlacklist(list){
     removeBtn.style.padding = '0 6px';
     removeBtn.style.borderRadius = '3px';
     removeBtn.addEventListener('click', () => {
-      chrome.storage.sync.get(['fbBlacklist'], data => {
+      chrome.storage.local.get(['fbBlacklist'], data => {
         const newList = (data.fbBlacklist || []).filter(e => e.href !== entry.href);
-        chrome.storage.sync.set({ fbBlacklist: newList });
+        chrome.storage.local.set({ fbBlacklist: newList }, broadcastContentRefresh);
       });
     });
     li.appendChild(link);
@@ -156,23 +220,26 @@ function renderFbBlacklist(list){
   });
 }
 
-chrome.storage.sync.get(['fbBlacklist'], data => {
+chrome.storage.local.get(['fbBlacklist'], data => {
   renderFbBlacklist(data.fbBlacklist || []);
 });
 
 fbClearBtn.addEventListener('click', () => {
   if(confirm('Clear entire Facebook blacklist?')){
-    chrome.storage.sync.set({ fbBlacklist: [] });
+    chrome.storage.local.set({ fbBlacklist: [] }, broadcastContentRefresh);
   }
 });
 
 chrome.storage.onChanged.addListener((changes, area) => {
-  if(area !== 'sync') return;
+  if(area !== 'sync' && area !== 'local') return;
   if(changes.fbBlacklist){
     renderFbBlacklist(changes.fbBlacklist.newValue || []);
   }
   if(changes.ytPlaylists){
     renderYtPlaylists(changes.ytPlaylists.newValue || []);
+  }
+  if(changes.fbBlacklist || changes.ytPlaylists){
+    broadcastContentRefresh();
   }
 });
 
@@ -281,10 +348,10 @@ function internalRender(list){
     removeBtn.style.padding = '0 6px';
     removeBtn.style.borderRadius = '3px';
     removeBtn.addEventListener('click', () => {
-      chrome.storage.sync.get(['ytPlaylists'], data => {
+      chrome.storage.local.get(['ytPlaylists'], data => {
         const current = Array.isArray(data.ytPlaylists) ? data.ytPlaylists : [];
         const next = current.filter(p => p.id !== pl.id);
-        chrome.storage.sync.set({ ytPlaylists: next });
+        chrome.storage.local.set({ ytPlaylists: next }, broadcastContentRefresh);
       });
     });
     li.appendChild(link);
@@ -304,12 +371,12 @@ function internalRender(list){
 if(ytClearBtn){
   ytClearBtn.addEventListener('click', () => {
     if(confirm('Clear all saved playlists?')){
-      chrome.storage.sync.set({ ytPlaylists: [] });
+      chrome.storage.local.set({ ytPlaylists: [] }, broadcastContentRefresh);
     }
   });
 }
 
-chrome.storage.sync.get(['ytPlaylists'], data => {
+chrome.storage.local.get(['ytPlaylists'], data => {
   renderYtPlaylists(data.ytPlaylists || []);
 });
 
@@ -320,13 +387,14 @@ chrome.storage.sync.get(['ytCourseMode'], data => {
     // Force a re-render pass which will early hide
     renderYtPlaylists([]);
   } else {
-    chrome.storage.sync.get(['ytPlaylists'], d2 => renderYtPlaylists(d2.ytPlaylists || []));
+    chrome.storage.local.get(['ytPlaylists'], d2 => renderYtPlaylists(d2.ytPlaylists || []));
   }
 });
 
 chrome.storage.onChanged.addListener((changes, area) => {
-  if(area !== 'sync') return;
+  if(area !== 'sync' && area !== 'local') return;
   if(changes.ytCourseMode){
-    chrome.storage.sync.get(['ytPlaylists'], data => renderYtPlaylists(data.ytPlaylists || []));
+    chrome.storage.local.get(['ytPlaylists'], data => renderYtPlaylists(data.ytPlaylists || []));
+    broadcastContentRefresh();
   }
 });

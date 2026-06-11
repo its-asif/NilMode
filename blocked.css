@@ -76,6 +76,25 @@ footer {
   opacity: .55;
 }
 
+/* Focus streak badge */
+.streak {
+  font-size: .8rem;
+  font-weight: 600;
+  letter-spacing: .03em;
+  background: rgba(37, 99, 235, .1);
+  border: 1px solid rgba(37, 99, 235, .25);
+  color: #2563eb;
+  padding: .35rem .9rem;
+  border-radius: 999px;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity .4s ease .1s, transform .4s ease .1s;
+}
+.streak.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 @media (prefers-color-scheme: dark) {
   body {
     background: linear-gradient(135deg, #10151c, #1f2933);
@@ -100,5 +119,11 @@ footer {
 
   button:hover {
     background: #1d4ed8;
+  }
+
+  .streak {
+    background: rgba(96, 165, 250, .12);
+    border-color: rgba(96, 165, 250, .3);
+    color: #93c5fd;
   }
 }

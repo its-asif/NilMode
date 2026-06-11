@@ -5,6 +5,7 @@
   const headline = document.getElementById('headline');
   const message = document.getElementById('message');
   const quoteEl = document.getElementById('quote');
+  const streakEl = document.getElementById('streak');
 
   const siteCopy = {
     facebook: {
@@ -22,7 +23,7 @@
   };
 
   const quotes = [
-    'Discipline is remembering what you want. — David Campbell',
+    'Discipline is remembering what you want. - David Campbell',
     "You don't need more time, you need more focus.",
     'Small, daily progress compounds into unstoppable momentum.',
     'Action cures anxiety.',
@@ -46,4 +47,36 @@
   document.getElementById('goBack').addEventListener('click', () => {
     history.length > 1 ? history.back() : window.close();
   });
+
+  // ── Focus streak counter ──────────────────────────────
+  // Tracks how many times each site has been blocked today.
+  if (streakEl && site) {
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    chrome.storage.local.get(['blockStreaks'], data => {
+      const streaks = data.blockStreaks || {};
+      const entry = streaks[site] || { date: '', count: 0 };
+
+      if (entry.date === today) {
+        entry.count += 1;
+      } else {
+        // New day - reset streak for this site
+        entry.date = today;
+        entry.count = 1;
+      }
+      streaks[site] = entry;
+      chrome.storage.local.set({ blockStreaks: streaks });
+
+      const n = entry.count;
+      const label = n === 1
+        ? '1st block today'
+        : n < 5
+          ? `${n} blocks today - you're holding strong`
+          : n < 10
+            ? `${n} blocks today - impressive self-control`
+            : `${n} blocks today - absolute machine 🔒`;
+
+      streakEl.textContent = '🛡 ' + label;
+      streakEl.classList.add('visible');
+    });
+  }
 })();

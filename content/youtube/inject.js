@@ -8,7 +8,8 @@ function maybeInjectYouTubePlaylistButtons(existingList){
   if (!isPurePlaylist && !isWatchWithPlaylist) return; // nothing to do
   ensurePlaylistButtonStyles();
   if (isPurePlaylist) {
-    const container = document.querySelector('#page-manager > ytd-browse > yt-page-header-renderer > yt-page-header-view-model > div.yt-page-header-view-model__scroll-container > div');
+    const container = document.querySelector('#page-manager > ytd-browse > yt-page-header-renderer > yt-page-header-view-model > div.yt-page-header-view-model__scroll-container > div')
+      || document.querySelector('#page-manager > ytd-browse > ytd-playlist-header-renderer > div > div.immersive-header-content.style-scope.ytd-playlist-header-renderer > div.thumbnail-and-metadata-wrapper.style-scope.ytd-playlist-header-renderer');
     if (container) {
       const alreadySaved = Array.isArray(existingList) && existingList.some(p => p.id === playlistId);
       if (alreadySaved) {

@@ -1,4 +1,4 @@
-## NilMode
+# NilMode
 Stay focused. Hide the noisy parts of Facebook and YouTube. Only see what you came for.
 
 Simple switches. No accounts. No clutter.
@@ -57,7 +57,7 @@ To refresh after changes: press the Reload icon on the extension card.
 ---
 
 Enjoy your focus.
-Build, learn, or rest—on purpose.
+Build, learn, or rest-on purpose.
 
 License: MIT (do whatever, no warranty).
 

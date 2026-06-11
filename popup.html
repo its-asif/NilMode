@@ -1,61 +1,79 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NilMode</title>
   <link rel="stylesheet" href="popup.css">
 </head>
+
 <body>
+
+  <!-- ── Live pause status strip (hidden when not paused) ── -->
+  <div id="pause-strip">
+    <span class="pause-strip-icon">⏸</span>
+    <span id="pause-strip-text"></span>
+    <button id="pause-strip-resume">Resume</button>
+  </div>
+
   <div class="tabs">
     <button class="tab-btn active" data-tab="facebook">Facebook</button>
     <button class="tab-btn" data-tab="youtube">YouTube</button>
     <button class="tab-btn" data-tab="settings">Settings</button>
   </div>
 
+  <!-- ── Facebook ── -->
   <div id="facebook" class="tab-content active">
-    <label><input type="checkbox" id="blockFacebook"> Block Facebook</label><br>
-    <label><input type="checkbox" id="hideFacebookFeed"> Hide Facebook Feed</label><br>
-    <label><input type="checkbox" id="hideFacebookStories"> Hide Stories</label><br>
-    <label><input type="checkbox" id="hideFacebookReelsPage"> Blank Reels Pages</label><br>
-    <label><input type="checkbox" id="hideRightSidebar"> Hide Right Sidebar</label><br>
-    <label><input type="checkbox" id="productiveFacebook"> Productive Facebook</label>
-  <br>
+    <label>Block Facebook<input type="checkbox" id="blockFacebook" class="toggle-danger"></label>
+    <label>Hide Feed<input type="checkbox" id="hideFacebookFeed"></label>
+    <label>Hide Stories<input type="checkbox" id="hideFacebookStories"></label>
+    <label>Blank Reels Pages<input type="checkbox" id="hideFacebookReelsPage"></label>
+    <label>Hide Right Sidebar<input type="checkbox" id="hideRightSidebar"></label>
+    <label>Productive Facebook<input type="checkbox" id="productiveFacebook"></label>
     <hr>
-    <h4 style="margin:6px 0 4px;">Blacklist</h4>
-    <div id="fbBlacklistEmpty" style="font-size:12px;color:#666;display:none;">(Empty)</div>
-    <ul id="fbBlacklistList" style="list-style:none;padding-left:0;margin:4px 0;max-height:150px;overflow:auto;"></ul>
-    <button id="fbBlacklistClear" style="display:none;margin-top:4px;">Clear All</button>
+    <h4>Blacklist</h4>
+    <div id="fbBlacklistEmpty" class="empty-hint">(Empty)</div>
+    <ul id="fbBlacklistList"></ul>
+    <button id="fbBlacklistClear">Clear All</button>
   </div>
 
+  <!-- ── YouTube ── -->
   <div id="youtube" class="tab-content">
-    <label><input type="checkbox" id="blockYouTube"> Block YouTube</label><br>
-    <label><input type="checkbox" id="hideYTRecs"> Hide Recommendations</label><br>
-    <label><input type="checkbox" id="hideYTShorts"> Hide Shorts</label><br>
-    <label><input type="checkbox" id="hideYTComments"> Hide Comments</label><br>
-    <label><input type="checkbox" id="hideYTNext"> Hide Next Suggestions</label><br>
-    <label><input type="checkbox" id="ytCourseMode"> Enable Course Playlists</label>
+    <label>Block YouTube<input type="checkbox" id="blockYouTube" class="toggle-danger"></label>
+    <label>Hide Recommendations<input type="checkbox" id="hideYTRecs"></label>
+    <label>Hide Shorts<input type="checkbox" id="hideYTShorts"></label>
+    <label>Hide Comments<input type="checkbox" id="hideYTComments"></label>
+    <label>Hide Next Suggestions<input type="checkbox" id="hideYTNext"></label>
+    <label>Enable Course Playlists<input type="checkbox" id="ytCourseMode"></label>
     <hr>
-    <h4 style="margin:6px 0 4px;">Saved Playlists</h4>
-    <div id="ytPlaylistsEmpty" style="font-size:12px;color:#666;display:none;">(None yet) Use "Start Course" on a playlist.</div>
-    <ul id="ytPlaylistsList" style="list-style:none;padding-left:0;margin:4px 0;max-height:120px;overflow:auto;"></ul>
-    <button id="ytPlaylistsClear" style="display:none;margin-top:4px;">Clear All</button>
-    <div id="ytCompletedWrap" style="margin-top:10px;display:none;">
-      <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;" id="ytCompletedToggle">
-        <h4 style="margin:6px 0 4px;">Completed Playlists</h4>
-        <span id="ytCompletedChevron" style="font-size:12px;opacity:.7;">▼</span>
+    <h4>Saved Playlists</h4>
+    <div id="ytPlaylistsEmpty" class="empty-hint">(None yet) - use "Start Course" on a playlist.</div>
+    <ul id="ytPlaylistsList"></ul>
+    <button id="ytPlaylistsClear">Clear All</button>
+    <div id="ytCompletedWrap">
+      <div id="ytCompletedToggle">
+        <h4>Completed Playlists</h4>
+        <span id="ytCompletedChevron">▼</span>
       </div>
-      <ul id="ytCompletedList" style="list-style:none;padding-left:0;margin:4px 0;max-height:100px;overflow:auto;display:block;"></ul>
+      <ul id="ytCompletedList"></ul>
     </div>
   </div>
 
+  <!-- ── Settings ── -->
   <div id="settings" class="tab-content">
-    <label><input type="checkbox" id="pauseToggle"> Pause</label><br>
-    <label>Pause for 
-      <input type="number" id="pauseMinutes" value="5" min="1" style="width:50px;">
+    <label>Pause blocking<input type="checkbox" id="pauseToggle"></label>
+    <div id="pauseReasonWrap">
+      <span class="settings-sublabel">Reason (optional)</span>
+      <input type="text" id="pauseReasonInput" placeholder="e.g. Quick break, Research…" maxlength="120">
+    </div>
+    <label class="settings-row">Pause for
+      <input type="number" id="pauseMinutes" value="5" min="1">
       minutes
     </label>
   </div>
 
   <script src="popup.js"></script>
 </body>
+
 </html>

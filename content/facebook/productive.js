@@ -40,7 +40,7 @@ function insertProductiveFacebookButtons() {
         }
       }
       if (!title) return;
-      chrome.storage.sync.get(['fbBlacklist'], data => {
+      chrome.storage.local.get(['fbBlacklist'], data => {
         const list = Array.isArray(data.fbBlacklist) ? data.fbBlacklist : [];
         const pathKey = (() => {
           try {
@@ -60,12 +60,12 @@ function insertProductiveFacebookButtons() {
           const cleanTitle = title.length > 100 ? title.substring(0, 97) + '...' : title;
           const newEntry = { href: pathKey, title: cleanTitle, type, addedAt: Date.now() };
           const estimatedSize = JSON.stringify([...list, newEntry]).length;
-          if (estimatedSize > 7000) {
-            alert('Blacklist storage full. Please clear some entries.');
+          if (estimatedSize > 150000) {
+            alert('Blacklist storage near limit. Please clear some entries.');
             return;
           }
           list.push(newEntry);
-          chrome.storage.sync.set({ fbBlacklist: list });
+          chrome.storage.local.set({ fbBlacklist: list });
         }
       });
     });

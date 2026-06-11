@@ -8,10 +8,10 @@ function populatePlaylistStats(box, playlistId, list){
     if (stats) {
       videoCount = stats.videoCount; totalDurationSeconds = stats.totalDurationSeconds; videoDurations = stats.videoDurations || {};
       entry.videoCount = videoCount; entry.totalDurationSeconds = totalDurationSeconds; entry.videoDurations = videoDurations;
-      chrome.storage.sync.get(['ytPlaylists'], data => {
+      chrome.storage.local.get(['ytPlaylists'], data => {
         const arr = Array.isArray(data.ytPlaylists)? data.ytPlaylists: [];
         const idx = arr.findIndex(p=>p.id===playlistId);
-        if (idx>=0){ arr[idx] = entry; chrome.storage.sync.set({ ytPlaylists: arr }); }
+        if (idx>=0){ arr[idx] = entry; chrome.storage.local.set({ ytPlaylists: arr }); }
       });
     }
   }
@@ -30,10 +30,10 @@ function populateWatchPlaylistStats(box, playlistId, list){
     if (stats) {
       videoCount = stats.videoCount; totalDurationSeconds = stats.totalDurationSeconds; videoDurations = stats.videoDurations || {};
       entry.videoCount = videoCount; entry.totalDurationSeconds = totalDurationSeconds; entry.videoDurations = videoDurations;
-      chrome.storage.sync.get(['ytPlaylists'], data => {
+      chrome.storage.local.get(['ytPlaylists'], data => {
         const arr = Array.isArray(data.ytPlaylists)? data.ytPlaylists: [];
         const idx = arr.findIndex(p=>p.id===playlistId);
-        if (idx>=0){ arr[idx] = entry; chrome.storage.sync.set({ ytPlaylists: arr }); }
+        if (idx>=0){ arr[idx] = entry; chrome.storage.local.set({ ytPlaylists: arr }); }
       });
     }
   }
