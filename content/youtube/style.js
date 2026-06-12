@@ -326,6 +326,19 @@ function ensurePlaylistButtonStyles(){
     .ndx-course-check:active {
       transform: scale(0.9);
     }
+
+    /* Support for new YouTube yt-lockup-view-model structure */
+    yt-lockup-metadata-view-model:has(.ndx-course-check-host) {
+      padding-right: 64px !important;
+    }
+    div.ytLockupMetadataViewModelMenuButton.ndx-course-menu-aug {
+      display: flex !important;
+      flex-direction: row !important;
+      align-items: center !important;
+      justify-content: center !important;
+      width: auto !important;
+      min-width: 56px !important;
+    }
   `;
   document.documentElement.appendChild(style);
 }

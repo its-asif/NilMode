@@ -50,6 +50,9 @@ function saveYouTubePlaylist(id, source) {
               <div class="ndx-yt-progress">
                 <div class="ndx-yt-progress-bar" style="width:0%"></div>
               </div>
+              <div class="ndx-yt-progress-summary" style="margin-top: 8px; font-size: 11.5px; color: #94a3b8; font-weight: 500;">
+                <span class="ndx-yt-progress-time-done">0s</span> done • <span class="ndx-yt-progress-time-left">${totalDurationSeconds ? formatDuration(totalDurationSeconds) : '…'}</span> left
+              </div>
             </div>
             <div class="ndx-yt-course-actions">
               <button class="ndx-yt-course-update">🔄 Sync Stats</button>

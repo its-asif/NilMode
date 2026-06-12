@@ -1,6 +1,7 @@
 function extractPlaylistStatsFromDom(){
   try {
-    const videoEls = document.querySelectorAll('#contents ytd-playlist-video-renderer, #contents ytd-playlist-panel-video-renderer, ytd-playlist-video-renderer');
+
+    const videoEls = document.querySelectorAll('#contents yt-lockup-view-model, #contents ytd-playlist-panel-video-renderer, ytd-playlist-video-renderer');
     if (!videoEls.length) return null;
     
     const videoCount = videoEls.length;
@@ -20,7 +21,9 @@ function extractPlaylistStatsFromDom(){
       const durBadge = vel.querySelector('#overlays ytd-thumbnail-overlay-time-status-renderer div.thumbnail-overlay-badge-shape badge-shape div.yt-badge-shape__text')
                     || vel.querySelector('ytd-thumbnail-overlay-time-status-renderer span')
                     || vel.querySelector('.yt-badge-shape__text')
-                    || vel.querySelector('#overlays span.style-scope.ytd-thumbnail-overlay-time-status-renderer');
+                    || vel.querySelector('#overlays span.style-scope.ytd-thumbnail-overlay-time-status-renderer')
+                    || vel.querySelector('yt-thumbnail-view-model > yt-thumbnail-bottom-overlay-view-model > div > yt-thumbnail-badge-view-model > badge-shape > div');
+
                     
       if (durBadge && durBadge.textContent.trim()) {
         const txt = durBadge.textContent.trim();

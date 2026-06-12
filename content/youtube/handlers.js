@@ -11,13 +11,16 @@ function attachPlaylistBoxHandlers(box, playlistId){
         const idx = arr.findIndex(p=>p.id===playlistId);
         if (idx>=0){
           arr[idx].videoCount = stats.videoCount;
-            arr[idx].totalDurationSeconds = stats.totalDurationSeconds;
-            chrome.storage.local.set({ ytPlaylists: arr }, () => {
-              const countEl = box.querySelector('.ndx-yt-count');
-              const durEl = box.querySelector('.ndx-yt-duration');
-              if (countEl) countEl.textContent = stats.videoCount;
-              if (durEl) durEl.textContent = formatDuration(stats.totalDurationSeconds);
-            });
+          arr[idx].totalDurationSeconds = stats.totalDurationSeconds;
+          arr[idx].videoDurations = stats.videoDurations || {};
+          ndxUpdatePlaylistEntryProgress(arr[idx]);
+          chrome.storage.local.set({ ytPlaylists: arr }, () => {
+            const countEl = box.querySelector('.ndx-yt-count');
+            const durEl = box.querySelector('.ndx-yt-duration');
+            if (countEl) countEl.textContent = stats.videoCount;
+            if (durEl) durEl.textContent = formatDuration(stats.totalDurationSeconds);
+            ndxRefreshProgressBars(arr[idx]);
+          });
         }
       });
     });
@@ -66,11 +69,14 @@ function attachWatchPlaylistBoxHandlers(box, playlistId){
         if (idx>=0){
           arr[idx].videoCount = stats.videoCount;
           arr[idx].totalDurationSeconds = stats.totalDurationSeconds;
+          arr[idx].videoDurations = stats.videoDurations || {};
+          ndxUpdatePlaylistEntryProgress(arr[idx]);
           chrome.storage.local.set({ ytPlaylists: arr }, () => {
             const countEl = box.querySelector('.ndx-yt-count');
             const durEl = box.querySelector('.ndx-yt-duration');
             if (countEl) countEl.textContent = stats.videoCount;
             if (durEl) durEl.textContent = formatDuration(stats.totalDurationSeconds);
+            ndxRefreshProgressBars(arr[idx]);
           });
         }
       });

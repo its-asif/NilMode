@@ -6,6 +6,32 @@ function ndxGetPlaylistIdFromUrl() {
   return params.get('list');
 }
 
+function ndxUpdatePlaylistEntryProgress(entry) {
+  const total = entry.videoCount || 0;
+  const done = Array.isArray(entry.completedIds) ? entry.completedIds.length : 0;
+  // compute completed seconds via stored per-video durations
+  let completedSeconds = 0;
+  if (entry.videoDurations && typeof entry.videoDurations === 'object') {
+    entry.completedIds.forEach(id => { if (entry.videoDurations[id]) completedSeconds += entry.videoDurations[id]; });
+  } else if (entry.totalDurationSeconds && total > 0) {
+    // fallback average distribution
+    const avg = entry.totalDurationSeconds / total;
+    completedSeconds = Math.round(avg * done);
+  }
+  entry.completedSeconds = completedSeconds;
+
+  if (total > 0 && done === total) {
+    entry.progressPct = 100;
+  } else {
+    const totalSecs = entry.totalDurationSeconds || 0;
+    if (totalSecs > 0) {
+      entry.progressPct = Math.min(100, Math.round(completedSeconds / totalSecs * 100));
+    } else {
+      entry.progressPct = total > 0 ? Math.min(100, Math.round(done / total * 100)) : 0;
+    }
+  }
+}
+
 function ndxComputeAndStoreProgress(playlistId, videoId, checked) {
   if (!playlistId || !videoId) return;
   if (!ndxIsContextValid()) return; // extension reloaded - DOM event still alive but context is dead
@@ -20,19 +46,7 @@ function ndxComputeAndStoreProgress(playlistId, videoId, checked) {
     } else {
       entry.completedIds = entry.completedIds.filter(id => id !== videoId);
     }
-    const total = entry.videoCount || 0;
-    const done = entry.completedIds.length;
-    // compute completed seconds via stored per-video durations
-    let completedSeconds = 0;
-    if (entry.videoDurations && typeof entry.videoDurations === 'object') {
-      entry.completedIds.forEach(id => { if (entry.videoDurations[id]) completedSeconds += entry.videoDurations[id]; });
-    } else if (entry.totalDurationSeconds && total > 0) {
-      // fallback average distribution
-      const avg = entry.totalDurationSeconds / total;
-      completedSeconds = Math.round(avg * done);
-    }
-    entry.completedSeconds = completedSeconds;
-    entry.progressPct = total > 0 ? Math.min(100, Math.round(done / total * 100)) : 0;
+    ndxUpdatePlaylistEntryProgress(entry);
     arr[idx] = entry;
     chrome.storage.local.set({ ytPlaylists: arr }, () => {
       ndxRefreshProgressBars(entry);
@@ -55,6 +69,13 @@ function ndxRefreshProgressBars(entry) {
       if (txt && txt.textContent !== desiredCompleted) txt.textContent = desiredCompleted;
       const pctTxt = box.querySelector('.ndx-yt-pct-text');
       if (pctTxt && pctTxt.textContent !== (progressPct + '%')) pctTxt.textContent = progressPct + '%';
+      
+      const timeDoneEl = box.querySelector('.ndx-yt-progress-time-done');
+      const timeLeftEl = box.querySelector('.ndx-yt-progress-time-left');
+      const desiredDone = formatDuration(completedSeconds);
+      if (timeDoneEl && timeDoneEl.textContent !== desiredDone) timeDoneEl.textContent = desiredDone;
+      const desiredLeft = leftSeconds ? formatDuration(leftSeconds) : '0s';
+      if (timeLeftEl && timeLeftEl.textContent !== desiredLeft) timeLeftEl.textContent = desiredLeft;
     }
   });
   // Watch variant box
@@ -78,6 +99,7 @@ function ndxRefreshProgressBars(entry) {
 }
 
 function ndxInjectCompletionCheckboxes(existingList) {
+
   const playlistId = ndxGetPlaylistIdFromUrl();
   if (!playlistId) return;
   // Only inject if this playlist is actually saved in ytPlaylists.
@@ -98,7 +120,9 @@ function ndxInjectCompletionCheckboxes(existingList) {
 
   // Apply flex reversal & center styling to menu containers then insert checkbox
   // Support both pure playlist (ytd-playlist-video-renderer) and watch panel (ytd-playlist-panel-video-renderer)
-  const menus = document.querySelectorAll('#menu.style-scope.ytd-playlist-video-renderer, #menu.style-scope.ytd-playlist-panel-video-renderer');
+  // #contents > div:nth-child(1) > yt-lockup-view-model > div > div > yt-lockup-metadata-view-model > div.ytLockupMetadataViewModelMenuButton > button-view-model > button > yt-touch-feedback-shape > div.ytSpecTouchFeedbackShapeFill
+  const menus = document.querySelectorAll('#contents > div > yt-lockup-view-model > div > div > yt-lockup-metadata-view-model > div.ytLockupMetadataViewModelMenuButton  , #menu.style-scope.ytd-playlist-panel-video-renderer');
+  console.log("menus", menus);
   let injectedAny = false;
   menus.forEach(menu => {
     // Ensure menu container has our flex styling
@@ -122,10 +146,10 @@ function ndxInjectCompletionCheckboxes(existingList) {
       // derive video id from parent anchor if possible
       let videoId = '';
       try {
-        const parentRenderer = menu.closest('ytd-playlist-video-renderer, ytd-playlist-panel-video-renderer');
+        const parentRenderer = menu.closest('ytd-playlist-video-renderer, ytd-playlist-panel-video-renderer, yt-lockup-view-model');
         if (parentRenderer) {
           // Try standard thumbnail anchor first
-          let a = parentRenderer.querySelector('a#thumbnail');
+          let a = parentRenderer.querySelector('a#thumbnail') || parentRenderer.querySelector('a[href*="watch?v="]');
           if (!a) {
             // Fallback: any anchor with a watch URL
             a = Array.from(parentRenderer.querySelectorAll('a')).find(el => el.href && el.href.includes('watch?v='));
@@ -139,13 +163,19 @@ function ndxInjectCompletionCheckboxes(existingList) {
       if (videoId && completed.has(videoId)) cb.checked = true;
       cb.addEventListener('change', () => ndxComputeAndStoreProgress(playlistId, videoId, cb.checked));
 
+      // Stop event propagation to prevent clicking the parent video link
+      ['click', 'mousedown', 'mouseup'].forEach(evtType => {
+        host.addEventListener(evtType, e => e.stopPropagation());
+        cb.addEventListener(evtType, e => e.stopPropagation());
+      });
+
       host.appendChild(cb);
       menu.prepend(host);
     }
   });
 
   // After all checkboxes, update progress bars once
-  if (entry && typeof entry.progressPct === 'number' && injectedAny) {
+  if (entry && typeof entry.progressPct === 'number') {
     ndxRefreshProgressBars(entry);
   }
 }
