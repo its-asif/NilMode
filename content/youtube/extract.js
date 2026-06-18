@@ -1,7 +1,6 @@
 function extractPlaylistStatsFromDom(){
   try {
-
-    const videoEls = document.querySelectorAll('#contents yt-lockup-view-model, #contents ytd-playlist-panel-video-renderer, ytd-playlist-video-renderer');
+    const videoEls = DOM.findAll('youtube.playlistVideoElements');
     if (!videoEls.length) return null;
     
     const videoCount = videoEls.length;
@@ -10,7 +9,7 @@ function extractPlaylistStatsFromDom(){
     
     videoEls.forEach(vel => {
       let videoId = '';
-      const a = vel.querySelector('a#thumbnail') || vel.querySelector('a');
+      const a = DOM.find('youtube.videoAnchor', vel);
       if (a && a.href) {
         try { 
           const pu = new URL(a.href); 
@@ -18,12 +17,7 @@ function extractPlaylistStatsFromDom(){
         } catch(_){}
       }
       
-      const durBadge = vel.querySelector('#overlays ytd-thumbnail-overlay-time-status-renderer div.thumbnail-overlay-badge-shape badge-shape div.yt-badge-shape__text')
-                    || vel.querySelector('ytd-thumbnail-overlay-time-status-renderer span')
-                    || vel.querySelector('.yt-badge-shape__text')
-                    || vel.querySelector('#overlays span.style-scope.ytd-thumbnail-overlay-time-status-renderer')
-                    || vel.querySelector('yt-thumbnail-view-model > yt-thumbnail-bottom-overlay-view-model > div > yt-thumbnail-badge-view-model > badge-shape > div');
-
+      const durBadge = DOM.find('youtube.videoDurationBadge', vel);
                     
       if (durBadge && durBadge.textContent.trim()) {
         const txt = durBadge.textContent.trim();
@@ -43,7 +37,7 @@ function extractPlaylistStatsFromDom(){
 
 function extractWatchPlaylistStatsFromDom(){
   try {
-    const itemNodes = document.querySelectorAll('#playlist-items, ytd-playlist-panel-video-renderer');
+    const itemNodes = DOM.findAll('youtube.watchPlaylistVideoElements');
     if (!itemNodes.length) return null;
     
     const videoCount = itemNodes.length;
@@ -52,7 +46,7 @@ function extractWatchPlaylistStatsFromDom(){
     
     itemNodes.forEach(node => {
       let videoId = '';
-      const a = node.querySelector('a');
+      const a = DOM.find('youtube.videoAnchor', node);
       if (a && a.href) { 
         try { 
           const pu = new URL(a.href); 
@@ -60,9 +54,7 @@ function extractWatchPlaylistStatsFromDom(){
         } catch(_){} 
       }
       
-      const badge = node.querySelector('.yt-badge-shape__text') 
-                 || node.querySelector('ytd-thumbnail-overlay-time-status-renderer span')
-                 || node.querySelector('.style-scope.ytd-thumbnail-overlay-time-status-renderer');
+      const badge = DOM.find('youtube.watchVideoDurationBadge', node);
                  
       if (badge && badge.textContent.trim()) {
         const txt = badge.textContent.trim();
@@ -79,3 +71,4 @@ function extractWatchPlaylistStatsFromDom(){
     return null; 
   }
 }
+

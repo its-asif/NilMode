@@ -9,20 +9,20 @@ function ndxCtxOk() {
 function ndxRestoreAllForPause() {
   const url = location.href;
   if (url.includes('facebook.com')) {
-    applyVisibility('.x1hc1fzr.x1unhpq9.x6o7n8i', false);
-    applyVisibility('.x193iq5w.xgmub6v.x1ceravr', false);
-    applyVisibility('.x78zum5.xdt5ytf.x1iyjqo2.x1n2onr6>.x1y1aw1k', false);
+    applyVisibility('facebook.feedContainer', false);
+    applyVisibility('facebook.storiesContainer', false);
+    applyVisibility('facebook.rightSidebar', false);
     restoreReelsPosts();
-    document.querySelectorAll('.ndx-pf-btn').forEach(btn => btn.remove());
-    document.querySelectorAll('.x1lliihq[data-ndx-bl-hidden="1"]').forEach(post => {
+    DOM.findAll('facebook.productiveBtn').forEach(btn => btn.remove());
+    DOM.findAll('facebook.hiddenBlacklistPosts').forEach(post => {
       post.style.display = ''; delete post.dataset.ndxBlHidden;
     });
   }
   if (url.includes('youtube.com')) {
-    applyVisibility('ytd-browse.style-scope.ytd-page-manager', false);
-    applyVisibility('ytd-rich-section-renderer.style-scope.ytd-rich-grid-renderer', false);
-    applyVisibility('ytd-comments#comments', false);
-    applyVisibility('#related #items', false);
+    applyVisibility('youtube.feedContainer', false);
+    applyVisibility('youtube.shortsContainer', false);
+    applyVisibility('youtube.commentsContainer', false);
+    applyVisibility('youtube.relatedContainer', false);
   }
 }
 
@@ -65,16 +65,16 @@ function runContentFilters() {
           }
           return; // Skip other FB logic
         }
-        applyVisibility('.x1hc1fzr.x1unhpq9.x6o7n8i', !!data.hideFacebookFeed);
+        applyVisibility('facebook.feedContainer', !!data.hideFacebookFeed);
         const hideStories = !!data.hideFacebookStories;
         if (hideStories) {
-          applyVisibility('.x193iq5w.xgmub6v.x1ceravr', true);
+          applyVisibility('facebook.storiesContainer', true);
         } else if (!data.hideFacebookFeed) {
-          applyVisibility('.x193iq5w.xgmub6v.x1ceravr', false);
+          applyVisibility('facebook.storiesContainer', false);
         } else {
-          applyVisibility('.x193iq5w.xgmub6v.x1ceravr', true);
+          applyVisibility('facebook.storiesContainer', true);
         }
-        const rightSidebarSelectors = ['.x78zum5.xdt5ytf.x1iyjqo2.x1n2onr6>.x1y1aw1k'];
+        const rightSidebarSelectors = ['facebook.rightSidebar'];
         rightSidebarSelectors.forEach(sel => applyVisibility(sel, !!data.hideRightSidebar));
         if (hideStories) hideReelsPosts(); else restoreReelsPosts();
         if (data.productiveFacebook) {
@@ -82,14 +82,14 @@ function runContentFilters() {
           if (Array.isArray(data.fbBlacklist) && data.fbBlacklist.length) {
             hideBlacklistedPosts(data.fbBlacklist);
           } else {
-            document.querySelectorAll('.x1lliihq[data-ndx-bl-hidden="1"]').forEach(post => {
+            DOM.findAll('facebook.hiddenBlacklistPosts').forEach(post => {
               post.style.display = '';
               delete post.dataset.ndxBlHidden;
             });
           }
         } else {
-          document.querySelectorAll('.ndx-pf-btn').forEach(btn => btn.remove());
-          document.querySelectorAll('.x1lliihq[data-ndx-bl-hidden="1"]').forEach(post => { post.style.display = ''; delete post.dataset.ndxBlHidden; });
+          DOM.findAll('facebook.productiveBtn').forEach(btn => btn.remove());
+          DOM.findAll('facebook.hiddenBlacklistPosts').forEach(post => { post.style.display = ''; delete post.dataset.ndxBlHidden; });
         }
       }
 
@@ -105,19 +105,21 @@ function runContentFilters() {
             return;
           }
         }
-        if (isHome) applyVisibility('ytd-browse.style-scope.ytd-page-manager', !!data.hideYTRecs); else applyVisibility('ytd-browse.style-scope.ytd-page-manager', false);
-        applyVisibility('ytd-rich-section-renderer.style-scope.ytd-rich-grid-renderer', !!data.hideYTShorts);
+        if (isHome) applyVisibility('youtube.feedContainer', !!data.hideYTRecs); else applyVisibility('youtube.feedContainer', false);
+        applyVisibility('youtube.shortsContainer', !!data.hideYTShorts);
         if (url.includes('watch')) {
-          applyVisibility('ytd-comments#comments', !!data.hideYTComments);
-          applyVisibility('#related #items', !!data.hideYTNext);
+          applyVisibility('youtube.commentsContainer', !!data.hideYTComments);
+          applyVisibility('youtube.relatedContainer', !!data.hideYTNext);
         }
         if (data.ytCourseMode !== false) {
           maybeInjectYouTubePlaylistButtons(data.ytPlaylists || []);
           ndxInjectCompletionCheckboxes(data.ytPlaylists || []);
         } else {
-          document.querySelectorAll('.ndx-yt-course-btn, .ndx-yt-course-box, .ndx-yt-course-box-watch').forEach(el => el.remove());
-          document.querySelectorAll('.ndx-course-check-host').forEach(h => h.remove());
-          document.querySelectorAll('.ndx-course-menu-aug').forEach(m => m.classList.remove('ndx-course-menu-aug'));
+          DOM.findAll('youtube.courseBtn').forEach(el => el.remove());
+          DOM.findAll('youtube.courseBox').forEach(el => el.remove());
+          DOM.findAll('youtube.courseBoxWatch').forEach(el => el.remove());
+          DOM.findAll('youtube.courseCheckHost').forEach(h => h.remove());
+          DOM.findAll('youtube.courseMenuAug').forEach(m => m.classList.remove('ndx-course-menu-aug'));
         }
       }
     });

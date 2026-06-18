@@ -60,18 +60,18 @@ function ndxRefreshProgressBars(entry) {
   const done = completedIds.length;
   const leftSeconds = totalDurationSeconds ? Math.max(0, totalDurationSeconds - completedSeconds) : 0;
   // Pure playlist box
-  document.querySelectorAll('.ndx-yt-course-box').forEach(box => {
+  DOM.findAll('youtube.courseBox').forEach(box => {
     if (box.dataset.playlistId === playlistId) {
-      const bar = box.querySelector('.ndx-yt-progress-bar');
+      const bar = DOM.find('youtube.courseProgressBar', box);
       if (bar && bar.style.width !== (progressPct + '%')) bar.style.width = progressPct + '%';
-      const txt = box.querySelector('.ndx-yt-completed-text');
+      const txt = DOM.find('youtube.courseCompletedText', box);
       const desiredCompleted = `${done}/${videoCount} Completed`;
       if (txt && txt.textContent !== desiredCompleted) txt.textContent = desiredCompleted;
-      const pctTxt = box.querySelector('.ndx-yt-pct-text');
+      const pctTxt = DOM.find('youtube.coursePctText', box);
       if (pctTxt && pctTxt.textContent !== (progressPct + '%')) pctTxt.textContent = progressPct + '%';
       
-      const timeDoneEl = box.querySelector('.ndx-yt-progress-time-done');
-      const timeLeftEl = box.querySelector('.ndx-yt-progress-time-left');
+      const timeDoneEl = DOM.find('youtube.courseTimeDone', box);
+      const timeLeftEl = DOM.find('youtube.courseTimeLeft', box);
       const desiredDone = formatDuration(completedSeconds);
       if (timeDoneEl && timeDoneEl.textContent !== desiredDone) timeDoneEl.textContent = desiredDone;
       const desiredLeft = leftSeconds ? formatDuration(leftSeconds) : '0s';
@@ -79,13 +79,13 @@ function ndxRefreshProgressBars(entry) {
     }
   });
   // Watch variant box
-  document.querySelectorAll('.ndx-yt-course-box-watch').forEach(box => {
+  DOM.findAll('youtube.courseBoxWatch').forEach(box => {
     if (box.dataset.playlistId === playlistId) {
-      const bar = box.querySelector('.ndx-yt-progress-bar'); if (bar && bar.style.width !== (progressPct + '%')) bar.style.width = progressPct + '%';
-      const timeDoneEl = box.querySelector('.ndx-yt-progress-time-done');
-      const timeTotalEl = box.querySelector('.ndx-yt-progress-time-total');
-      const vidsEl = box.querySelector('.ndx-yt-progress-videos');
-      const summaryEl = box.querySelector('.ndx-yt-progress-summary');
+      const bar = DOM.find('youtube.courseProgressBar', box); if (bar && bar.style.width !== (progressPct + '%')) bar.style.width = progressPct + '%';
+      const timeDoneEl = DOM.find('youtube.courseTimeDone', box);
+      const timeTotalEl = DOM.find('youtube.courseTimeTotal', box);
+      const vidsEl = DOM.find('youtube.courseProgressVideos', box);
+      const summaryEl = DOM.find('youtube.courseProgressSummary', box);
       const desiredDone = formatDuration(completedSeconds);
       if (timeDoneEl && timeDoneEl.textContent !== desiredDone) timeDoneEl.textContent = desiredDone;
       const desiredTotal = totalDurationSeconds ? formatDuration(totalDurationSeconds) : '…';
@@ -106,8 +106,8 @@ function ndxInjectCompletionCheckboxes(existingList) {
   const entry = Array.isArray(existingList) ? existingList.find(p => p.id === playlistId) : null;
   if (!entry) {
     // If previously injected (user deleted playlist), remove checkboxes & styling.
-    document.querySelectorAll('.ndx-course-check-host').forEach(h => h.remove());
-    document.querySelectorAll('.ndx-course-menu-aug').forEach(m => {
+    DOM.findAll('youtube.courseCheckHost').forEach(h => h.remove());
+    DOM.findAll('youtube.courseMenuAug').forEach(m => {
       m.classList.remove('ndx-course-menu-aug');
       m.style.removeProperty('display');
       m.style.removeProperty('justify-content');
@@ -120,8 +120,7 @@ function ndxInjectCompletionCheckboxes(existingList) {
 
   // Apply flex reversal & center styling to menu containers then insert checkbox
   // Support both pure playlist (ytd-playlist-video-renderer) and watch panel (ytd-playlist-panel-video-renderer)
-  // #contents > div:nth-child(1) > yt-lockup-view-model > div > div > yt-lockup-metadata-view-model > div.ytLockupMetadataViewModelMenuButton > button-view-model > button > yt-touch-feedback-shape > div.ytSpecTouchFeedbackShapeFill
-  const menus = document.querySelectorAll('#contents > div > yt-lockup-view-model > div > div > yt-lockup-metadata-view-model > div.ytLockupMetadataViewModelMenuButton  , #menu.style-scope.ytd-playlist-panel-video-renderer');
+  const menus = DOM.findAll('youtube.playlistMenuContainer');
   console.log("menus", menus);
   let injectedAny = false;
   menus.forEach(menu => {
@@ -135,7 +134,7 @@ function ndxInjectCompletionCheckboxes(existingList) {
     }
 
     // If checkbox host is missing (e.g., panel re-rendered and children were replaced), re-insert
-    if (!menu.querySelector('.ndx-course-check-host')) {
+    if (!DOM.find('youtube.courseCheckHost', menu)) {
       injectedAny = true;
       const host = document.createElement('div');
       host.className = 'ndx-course-check-host';
@@ -146,10 +145,10 @@ function ndxInjectCompletionCheckboxes(existingList) {
       // derive video id from parent anchor if possible
       let videoId = '';
       try {
-        const parentRenderer = menu.closest('ytd-playlist-video-renderer, ytd-playlist-panel-video-renderer, yt-lockup-view-model');
+        const parentRenderer = DOM.closest(menu, 'youtube.parentRenderer');
         if (parentRenderer) {
           // Try standard thumbnail anchor first
-          let a = parentRenderer.querySelector('a#thumbnail') || parentRenderer.querySelector('a[href*="watch?v="]');
+          let a = DOM.find('youtube.videoAnchor', parentRenderer);
           if (!a) {
             // Fallback: any anchor with a watch URL
             a = Array.from(parentRenderer.querySelectorAll('a')).find(el => el.href && el.href.includes('watch?v='));
@@ -223,7 +222,7 @@ function ndxStartCheckboxMaintenance() {
   }
   // Observe the watch playlist panel (type-2) for re-renders
   const tryObserve = () => {
-    const panel = document.querySelector('ytd-playlist-panel-renderer');
+    const panel = DOM.find('youtube.watchPlaylistPanel');
     if (panel && !panel.dataset.ndxObserved) {
       panel.dataset.ndxObserved = '1';
       const obs = new MutationObserver(() => {

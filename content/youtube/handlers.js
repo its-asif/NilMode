@@ -1,7 +1,7 @@
 // Event handlers for playlist stats boxes (update/delete)
 function attachPlaylistBoxHandlers(box, playlistId){
-  const updateBtn = box.querySelector('.ndx-yt-course-update');
-  const deleteBtn = box.querySelector('.ndx-yt-course-delete');
+  const updateBtn = DOM.find('youtube.courseUpdateBtn', box);
+  const deleteBtn = DOM.find('youtube.courseDeleteBtn', box);
   if (updateBtn) {
     updateBtn.addEventListener('click', () => {
       const stats = extractPlaylistStatsFromDom();
@@ -15,8 +15,8 @@ function attachPlaylistBoxHandlers(box, playlistId){
           arr[idx].videoDurations = stats.videoDurations || {};
           ndxUpdatePlaylistEntryProgress(arr[idx]);
           chrome.storage.local.set({ ytPlaylists: arr }, () => {
-            const countEl = box.querySelector('.ndx-yt-count');
-            const durEl = box.querySelector('.ndx-yt-duration');
+            const countEl = DOM.find('youtube.courseCount', box);
+            const durEl = DOM.find('youtube.courseDuration', box);
             if (countEl) countEl.textContent = stats.videoCount;
             if (durEl) durEl.textContent = formatDuration(stats.totalDurationSeconds);
             ndxRefreshProgressBars(arr[idx]);
@@ -33,9 +33,8 @@ function attachPlaylistBoxHandlers(box, playlistId){
         const next = arr.filter(p=>p.id!==playlistId);
         chrome.storage.local.set({ ytPlaylists: next }, () => {
           box.remove();
-          const container = document.querySelector('#page-manager > ytd-browse > yt-page-header-renderer > yt-page-header-view-model > div.ytPageHeaderViewModelScrollContainer > div')
-            || document.querySelector('#page-manager > ytd-browse > ytd-playlist-header-renderer > div > div.immersive-header-content.style-scope.ytd-playlist-header-renderer > div.thumbnail-and-metadata-wrapper.style-scope.ytd-playlist-header-renderer');
-          if (container && !container.querySelector('.ndx-yt-course-btn-pure')) {
+          const container = DOM.find('youtube.purePlaylistHeaderContainer');
+          if (container && !DOM.find('youtube.courseBtnPure', container)) {
             const a = document.createElement('a');
             a.textContent = 'Start Course';
             a.href = 'javascript:void(0)';
@@ -43,8 +42,8 @@ function attachPlaylistBoxHandlers(box, playlistId){
             a.addEventListener('click', () => saveYouTubePlaylist(playlistId, 'pure'));
             container.appendChild(a);
           }
-          const h3 = document.querySelector('#header-description > h3:nth-child(1)');
-          if (h3 && !h3.querySelector('.ndx-yt-course-btn-watch')) {
+          const h3 = DOM.find('youtube.watchPlaylistHeaderTitle');
+          if (h3 && !DOM.find('youtube.courseBtnWatch', h3)) {
             const btn = document.createElement('button');
             btn.textContent = 'Start Course';
             btn.className = 'ndx-yt-course-btn ndx-yt-course-btn-watch';
@@ -57,8 +56,8 @@ function attachPlaylistBoxHandlers(box, playlistId){
   }
 }
 function attachWatchPlaylistBoxHandlers(box, playlistId){
-  const updateBtn = box.querySelector('.ndx-yt-course-update-watch');
-  const deleteBtn = box.querySelector('.ndx-yt-course-delete-watch');
+  const updateBtn = DOM.find('youtube.courseUpdateWatchBtn', box);
+  const deleteBtn = DOM.find('youtube.courseDeleteWatchBtn', box);
   if (updateBtn) {
     updateBtn.addEventListener('click', () => {
       const stats = extractWatchPlaylistStatsFromDom();
@@ -72,8 +71,8 @@ function attachWatchPlaylistBoxHandlers(box, playlistId){
           arr[idx].videoDurations = stats.videoDurations || {};
           ndxUpdatePlaylistEntryProgress(arr[idx]);
           chrome.storage.local.set({ ytPlaylists: arr }, () => {
-            const countEl = box.querySelector('.ndx-yt-count');
-            const durEl = box.querySelector('.ndx-yt-duration');
+            const countEl = DOM.find('youtube.courseCount', box);
+            const durEl = DOM.find('youtube.courseDuration', box);
             if (countEl) countEl.textContent = stats.videoCount;
             if (durEl) durEl.textContent = formatDuration(stats.totalDurationSeconds);
             ndxRefreshProgressBars(arr[idx]);
@@ -90,8 +89,8 @@ function attachWatchPlaylistBoxHandlers(box, playlistId){
         const next = arr.filter(p=>p.id!==playlistId);
         chrome.storage.local.set({ ytPlaylists: next }, () => {
           box.remove();
-          const h3 = document.querySelector('#header-description > h3:nth-child(1)');
-          if (h3 && !h3.querySelector('.ndx-yt-course-btn-watch')) {
+          const h3 = DOM.find('youtube.watchPlaylistHeaderTitle');
+          if (h3 && !DOM.find('youtube.courseBtnWatch', h3)) {
             const btn = document.createElement('button');
             btn.textContent = 'Start Course';
             btn.className = 'ndx-yt-course-btn ndx-yt-course-btn-watch';
@@ -103,3 +102,4 @@ function attachWatchPlaylistBoxHandlers(box, playlistId){
     });
   }
 }
+

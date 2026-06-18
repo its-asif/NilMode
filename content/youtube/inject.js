@@ -8,12 +8,11 @@ function maybeInjectYouTubePlaylistButtons(existingList){
   if (!isPurePlaylist && !isWatchWithPlaylist) return; // nothing to do
   ensurePlaylistButtonStyles();
   if (isPurePlaylist) {
-    const container = document.querySelector('#page-manager > ytd-browse > yt-page-header-renderer > yt-page-header-view-model > div.ytPageHeaderViewModelScrollContainer > div')
-      || document.querySelector('#page-manager > ytd-browse > ytd-playlist-header-renderer > div > div.immersive-header-content.style-scope.ytd-playlist-header-renderer > div.thumbnail-and-metadata-wrapper.style-scope.ytd-playlist-header-renderer');
+    const container = DOM.find('youtube.purePlaylistHeaderContainer');
     if (container) {
       const alreadySaved = Array.isArray(existingList) && existingList.some(p => p.id === playlistId);
       if (alreadySaved) {
-        if (!container.querySelector('.ndx-yt-course-box')) {
+        if (!DOM.find('youtube.courseBox', container)) {
           const box = document.createElement('div');
           box.className = 'ndx-yt-course-box';
           box.innerHTML = `
@@ -42,7 +41,7 @@ function maybeInjectYouTubePlaylistButtons(existingList){
           populatePlaylistStats(box, playlistId, existingList);
           attachPlaylistBoxHandlers(box, playlistId);
         }
-      } else if (!container.querySelector('.ndx-yt-course-btn-pure')) {
+      } else if (!DOM.find('youtube.courseBtnPure', container)) {
         const a = document.createElement('a');
         a.textContent = '🎓 Start Course';
         a.href = 'javascript:void(0)';
@@ -53,12 +52,12 @@ function maybeInjectYouTubePlaylistButtons(existingList){
     }
   }
   if (isWatchWithPlaylist) {
-    const h3 = document.querySelector('#header-description > h3:nth-child(1)');
-    const headerContents = document.querySelector('#header-contents');
+    const h3 = DOM.find('youtube.watchPlaylistHeaderTitle');
+    const headerContents = DOM.find('youtube.watchPlaylistHeaderContents');
     if (h3) {
       const alreadySaved = Array.isArray(existingList) && existingList.some(p => p.id === playlistId);
       if (alreadySaved && headerContents) {
-        if (!headerContents.querySelector('.ndx-yt-course-box-watch')) {
+        if (!DOM.find('youtube.courseBoxWatch', headerContents)) {
           const box = document.createElement('div');
           box.className = 'ndx-yt-course-box-watch';
           box.innerHTML = `
@@ -84,7 +83,7 @@ function maybeInjectYouTubePlaylistButtons(existingList){
           populateWatchPlaylistStats(box, playlistId, existingList);
           attachWatchPlaylistBoxHandlers(box, playlistId);
         }
-      } else if (!h3.querySelector('.ndx-yt-course-btn-watch')) {
+      } else if (!DOM.find('youtube.courseBtnWatch', h3)) {
         const btn = document.createElement('button');
         btn.textContent = '🎓 Start Course';
         btn.className = 'ndx-yt-course-btn ndx-yt-course-btn-watch';

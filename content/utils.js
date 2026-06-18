@@ -1,7 +1,7 @@
 // utils.js - shared utility helpers for NilMode content scripts
 // Visibility toggling helper retained verbatim from original content.js
 function applyVisibility(selector, shouldHide) {
-  const els = document.querySelectorAll(selector);
+  const els = DOM.findAll(selector);
   els.forEach(el => {
     if (shouldHide) {
       if (!el.dataset.ndxHidden) {

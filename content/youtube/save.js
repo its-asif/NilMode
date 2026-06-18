@@ -3,11 +3,10 @@ function saveYouTubePlaylist(id, source) {
   if (!id) return;
   const canonicalUrl = `https://www.youtube.com/playlist?list=${id}`;
   let title = '';
-  const pureTitleEl = document.querySelector('#page-manager > ytd-browse > yt-page-header-renderer > yt-page-header-view-model > div.ytPageHeaderViewModelScrollContainer > div > div.yt-page-header-view-model__page-header-headline > div > yt-dynamic-text-view-model > h1 > span');
-  if (pureTitleEl && pureTitleEl.textContent.trim()) title = pureTitleEl.textContent.trim();
-  if (!title) {
-    const watchTitleAnchor = document.querySelector('#header-description > h3:nth-child(1) > yt-formatted-string > a');
-    if (watchTitleAnchor && watchTitleAnchor.textContent.trim()) title = watchTitleAnchor.textContent.trim();
+  // Try several selectors to find the playlist title (both for pure playlist view and watch panel view)
+  const titleEl = DOM.find('youtube.playlistTitle');
+  if (titleEl && titleEl.textContent.trim()) {
+    title = titleEl.textContent.trim();
   }
   if (!title) title = id;
   chrome.storage.local.get(['ytPlaylists'], data => {
@@ -29,11 +28,10 @@ function saveYouTubePlaylist(id, source) {
     list.push(entry);
     chrome.storage.local.set({ ytPlaylists: list }, () => {
       if (source === 'pure') {
-        const container = document.querySelector('#page-manager > ytd-browse > yt-page-header-renderer > yt-page-header-view-model > div.ytPageHeaderViewModelScrollContainer > div')
-          || document.querySelector('#page-manager > ytd-browse > ytd-playlist-header-renderer > div > div.immersive-header-content.style-scope.ytd-playlist-header-renderer > div.thumbnail-and-metadata-wrapper.style-scope.ytd-playlist-header-renderer')
+        const container = DOM.find('youtube.purePlaylistHeaderContainer');
 
         if (container) {
-          const btn = container.querySelector('.ndx-yt-course-btn-pure');
+          const btn = DOM.find('youtube.courseBtnPure', container);
           if (btn) btn.remove();
           const box = document.createElement('div');
           box.className = 'ndx-yt-course-box';
@@ -64,9 +62,9 @@ function saveYouTubePlaylist(id, source) {
           attachPlaylistBoxHandlers(box, id);
         }
       } else if (source === 'watch') {
-        const h3 = document.querySelector('#header-description > h3:nth-child(1)');
-        const headerContents = document.querySelector('#header-contents');
-        if (h3) { const btn = h3.querySelector('.ndx-yt-course-btn-watch'); if (btn) btn.remove(); }
+        const h3 = DOM.find('youtube.watchPlaylistHeaderTitle');
+        const headerContents = DOM.find('youtube.watchPlaylistHeaderContents');
+        if (h3) { const btn = DOM.find('youtube.courseBtnWatch', h3); if (btn) btn.remove(); }
         if (headerContents) {
           const box = document.createElement('div');
           box.className = 'ndx-yt-course-box-watch';

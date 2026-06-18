@@ -1,13 +1,13 @@
 // Productive Facebook: inject ❌ buttons beside author names
 function insertProductiveFacebookButtons() {
-  const posts = document.querySelectorAll('.x1lliihq');
+  const posts = DOM.findAll('facebook.posts');
   posts.forEach(post => {
-    const container = post.querySelector('.xu06os2.x1ok221b');
+    const container = DOM.find('facebook.postContainer', post);
     if (!container) return;
-    const nameWrapper = container.querySelector('span.xt0psk2');
+    const nameWrapper = DOM.find('facebook.postNameWrapper', container);
     if (!nameWrapper) return;
-    if (nameWrapper.querySelector('.ndx-pf-btn')) return; // already inserted
-    const userSpan = nameWrapper.querySelector('span.xjp7ctv');
+    if (DOM.find('facebook.productiveBtn', nameWrapper)) return; // already inserted
+    const userSpan = DOM.find('facebook.postUserSpan', nameWrapper);
     if (!userSpan) return;
 
     const btn = document.createElement('button');
@@ -20,17 +20,17 @@ function insertProductiveFacebookButtons() {
     });
     btn.addEventListener('click', e => {
       e.stopPropagation();
-      const anchor = userSpan.querySelector('a');
+      const anchor = DOM.find('facebook.postAnchor', userSpan);
       if (!anchor || !anchor.href) return;
       const href = anchor.href;
       let title = '';
       let type = 'unknown';
-      const personSpan = anchor.querySelector('b > span');
+      const personSpan = DOM.find('facebook.postPersonName', anchor);
       if (personSpan && personSpan.textContent.trim()) {
         title = personSpan.textContent.trim();
         type = 'person';
       } else {
-        const groupSpan = anchor.querySelector(':scope > span');
+        const groupSpan = DOM.find('facebook.postGroupName', anchor);
         if (groupSpan && groupSpan.textContent.trim()) {
           title = groupSpan.textContent.trim();
           type = 'group';

@@ -14,13 +14,13 @@ function hideBlacklistedPosts(blacklist) {
     } catch { return raw; }
   };
   const set = new Set(blacklist.map(e => e.href));
-  const posts = document.querySelectorAll('.x1lliihq');
+  const posts = DOM.findAll('facebook.posts');
   posts.forEach(post => {
-    const container = post.querySelector('.xu06os2.x1ok221b');
+    const container = DOM.find('facebook.postContainer', post);
     if(!container) return;
-    const nameWrapper = container.querySelector('span.xt0psk2');
+    const nameWrapper = DOM.find('facebook.postNameWrapper', container);
     if(!nameWrapper) return;
-    const anchor = nameWrapper.querySelector('span.xjp7ctv a');
+    const anchor = DOM.find('facebook.postAuthorLink', nameWrapper);
     if(!anchor || !anchor.href) return;
     const norm = normalize(anchor.href);
     if (set.has(norm)) {

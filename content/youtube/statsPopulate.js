@@ -16,8 +16,8 @@ function populatePlaylistStats(box, playlistId, list){
     }
   }
   if (videoCount == null) return;
-  const countEl = box.querySelector('.ndx-yt-count');
-  const durEl = box.querySelector('.ndx-yt-duration');
+  const countEl = DOM.find('youtube.courseCount', box);
+  const durEl = DOM.find('youtube.courseDuration', box);
   if (countEl) countEl.textContent = videoCount;
   if (durEl) durEl.textContent = formatDuration(totalDurationSeconds);
 }
@@ -38,8 +38,9 @@ function populateWatchPlaylistStats(box, playlistId, list){
     }
   }
   if (videoCount == null) return;
-  const countEl = box.querySelector('.ndx-yt-count');
-  const durEl = box.querySelector('.ndx-yt-duration');
+  const countEl = DOM.find('youtube.courseCount', box);
+  const durEl = DOM.find('youtube.courseDuration', box);
   if (countEl) countEl.textContent = videoCount;
   if (durEl) durEl.textContent = formatDuration(totalDurationSeconds);
 }
+
